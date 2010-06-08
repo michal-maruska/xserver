@@ -425,8 +425,7 @@ XkbApplyCompatMapToKey(XkbDescPtr xkb, KeyCode key, XkbChangesPtr changes)
             xkb->server->key_acts[key] = 0;
             changed |= XkbKeyActionsMask;
         }
-    }
-    else {
+    } else {
         XkbAction *pActs;
         unsigned int new_vmodmask;
 
@@ -479,6 +478,7 @@ XkbApplyCompatMapToKey(XkbDescPtr xkb, KeyCode key, XkbChangesPtr changes)
             }
         }
     }
+    /* mmc: this should trigger copying into dev->feed */
     if ((!found) || (interps[0] == NULL)) {
         if (((explicit & XkbExplicitAutoRepeatMask) == 0) && (xkb->ctrls)) {
             CARD8 old;
