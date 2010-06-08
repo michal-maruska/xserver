@@ -896,4 +896,13 @@ extern _X_EXPORT XkbDescPtr XkbCompileKeymapFromString(DeviceIntPtr dev,
 						       const char *keymap,
 						       int keymap_length);
 
+#if MMC_PIPELINE
+/* this is called from the module to register/provide! */
+void xkb_add_plugin_class(DevicePluginRec* plugin);
+
+/* When a plugin is ready to be removed from the pipeline, it does so by calling: */
+Bool xkb_remove_plugin(PluginInstance* plugin);
+#endif
+
+
 #endif                          /* _XKBSRV_H_ */
