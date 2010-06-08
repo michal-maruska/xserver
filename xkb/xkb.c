@@ -781,7 +781,9 @@ ProcXkbSetControls(ClientPtr client)
         return BadAccess;
 
     CHK_KBD_DEVICE(dev, stuff->deviceSpec, client, DixManageAccess);
-    CHK_MASK_LEGAL(0x01, stuff->changeCtrls, XkbAllControlsMask);
+    //    CHK_MASK_LEGAL(0x01, stuff->changeCtrls, XkbAllControlsMask);
+    ErrorF("%s: %lu vs %lu\n", __FUNCTION__, (unsigned long) stuff->changeCtrls,
+	   XkbPerKeyRepeatMask);
 
     for (tmpd = inputInfo.devices; tmpd; tmpd = tmpd->next) {
         if (!tmpd->key || !tmpd->key->xkbInfo)
@@ -952,6 +954,7 @@ ProcXkbSetControls(ClientPtr client)
             }
 
             if (stuff->changeCtrls & XkbPerKeyRepeatMask) {
+                ErrorF("[xkb] so copying the perKeyRepeat\n");
                 memcpy(new.per_key_repeat, stuff->perKeyRepeat,
                        XkbPerKeyBitArraySize);
                 if (xkbi->repeatKey &&
@@ -2132,12 +2135,16 @@ SetKeySyms(ClientPtr client,
     KeySym *pSyms;
     unsigned first, last;
 
+    ErrorF ("first %d, %d, \n", req->firstKeySym, req->nKeySyms);
     oldMap = &xkb->map->key_sym_map[req->firstKeySym];
     for (i = 0; i < req->nKeySyms; i++, oldMap++) {
         pSyms = (KeySym *) &wire[1];
+        ErrorF ("nsyms %d, %d\n", wire->nSyms, i+req->firstKeySym);
         if (wire->nSyms > 0) {
             newSyms = XkbResizeKeySyms(xkb, i + req->firstKeySym, wire->nSyms);
             for (s = 0; s < wire->nSyms; s++) {
+                ErrorF ("overwriting %lu, %lu, total %d \n", newSyms[s], pSyms[s],
+                        XkbKeyNumSyms(xkb,i+req->firstKeySym));
                 newSyms[s] = pSyms[s];
             }
             if (client->swapped) {
