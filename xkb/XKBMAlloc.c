@@ -267,6 +267,7 @@ XkbCopyKeyTypes(XkbKeyTypePtr from, XkbKeyTypePtr into, int num_types)
 Status
 XkbResizeKeyType(XkbDescPtr xkb,
                  int type_ndx,
+                 /* mmc: number of mappings: modifier-set -> level  */
                  int map_count, Bool want_preserve, int new_num_lvls)
 {
     XkbKeyTypePtr type;
@@ -502,6 +503,7 @@ XkbResizeKeySyms(XkbDescPtr xkb, int key, int needed)
         return NULL;
     newSyms[0] = NoSymbol;
     nSyms = 1;
+    /* mmc: compactify. */
     for (i = xkb->min_key_code; i <= (int) xkb->max_key_code; i++) {
         int nCopy;
 
