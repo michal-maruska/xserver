@@ -1634,10 +1634,15 @@ CheckKeyTypes(ClientPtr client,
         *nMapsRtrn = xkb->map->num_types;
         for (i = 0; i < xkb->map->num_types; i++) {
             mapWidthRtrn[i] = xkb->map->types[i].num_levels;
+            /*
+             * mmc:  mapWidthRtrn is allocated for max keycodes.  Is the same
+             * limit valid for # of levels of Types???
+             */
         }
         return 1;
     }
 
+    /* Copy the unaffected interval: */
     for (i = 0; i < req->firstType; i++) {
         mapWidthRtrn[i] = xkb->map->types[i].num_levels;
     }
@@ -1778,6 +1783,7 @@ CheckKeySyms(ClientPtr client,
         if (client->swapped && doswap) {
             swaps(&wire->nSyms);
         }
+        /* mmc: Checking the Nodes: 1/ good group information? */
         nG = XkbNumGroups(wire->groupInfo);
         if (nG > XkbNumKbdGroups) {
             *errorRtrn = _XkbErrCode3(0x14, i + req->firstKeySym, nG);
@@ -2281,6 +2287,10 @@ SetKeyActions(XkbDescPtr xkb,
         int oldLast;
 
         oldLast = changes->map.first_key_act + changes->map.num_key_acts - 1;
+	/*
+	 * mmc: Isn't there a function to enlarge an interval to include
+	 * 2 points?  (inverse of CLAMP)
+	 */
         if (changes->map.first_key_act < first)
             first = changes->map.first_key_act;
         if (oldLast > last)
@@ -2288,6 +2298,7 @@ SetKeyActions(XkbDescPtr xkb,
     }
     changes->map.changed |= XkbKeyActionsMask;
     changes->map.first_key_act = first;
+    /* mmc: why not simply  req->nKeyActs*/
     changes->map.num_key_acts = (last - first + 1);
     return (char *) wire;
 }
@@ -2388,6 +2399,7 @@ SetKeyExplicit(XkbSrvInfoPtr xkbi, xkbSetMapReq * req, CARD8 *wire,
         xkb->explicit[wire[0]] = wire[1];
     }
     if (first > 0) {
+        /* don't we set it? */
         if (changes->map.changed & XkbExplicitComponentsMask) {
             int oldLast;
 
@@ -7126,6 +7138,7 @@ ProcXkbDispatch(ClientPtr client)
 {
     REQUEST(xReq);
     switch (stuff->data) {
+    /* mmc: is this req->xkbReqType ? */
     case X_kbUseExtension:
         return ProcXkbUseExtension(client);
     case X_kbSelectEvents:
