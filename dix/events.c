@@ -1331,6 +1331,9 @@ ComputeFreezes(void)
         FreezeThaw(dev, dev->deviceGrab.sync.other ||
                    (dev->deviceGrab.sync.state >= FROZEN));
 
+    /* this flipper `playingEvents' is set by TRUE at init, and then flipped by this functions.
+     * we don't want to be called recursively.*/
+
     if (syncEvents.playingEvents
 #if !MMC_PIPELINE
     /* There are conditions, under which it is useless to proceed with this function.
@@ -1429,6 +1432,7 @@ ComputeFreezes(void)
             }
         }
     }
+    /* now the flipper, to avoid recursive */
     syncEvents.playingEvents = FALSE;
     /* mmc: [24 gen 06] a quick attempt to fix: */
     devices = inputInfo.devices?inputInfo.devices:inputInfo.off_devices;
