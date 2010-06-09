@@ -511,6 +511,12 @@ mieqProcessDeviceEvent(DeviceIntPtr dev, InternalEvent *event, ScreenPtr screen)
 
 /* Call this from ProcessInputEvents(). */
 void
+mieqProcessInputEventsTime(Time now)
+{
+    mieqProcessInputEvents();
+}
+
+void
 mieqProcessInputEvents(void)
 {
     EventRec *e = NULL;
