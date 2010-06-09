@@ -1322,7 +1322,12 @@ ComputeFreezes(void)
     DeviceIntPtr dev;
     Bool played = FALSE;
 
-    for (dev = inputInfo.devices; dev; dev = dev->next)
+    DeviceIntPtr devices;
+    /* mmc: [24 gen 06] a quick attempt to fix:   mmc: What? is that
+       after VT switch? */
+    devices = inputInfo.devices?inputInfo.devices:inputInfo.off_devices;
+
+    for (dev = devices; dev; dev = dev->next)
         FreezeThaw(dev, dev->deviceGrab.sync.other ||
                    (dev->deviceGrab.sync.state >= FROZEN));
 
@@ -1386,7 +1391,7 @@ ComputeFreezes(void)
             }
         }
     }
-    for (dev = inputInfo.devices; dev; dev = dev->next) {
+    for (dev = devices; dev; dev = dev->next) {
             if (!dev->deviceGrab.sync.frozen) {
 #if MMC_PIPELINE
             if (dev->public.thawProc) {
@@ -1411,7 +1416,10 @@ ComputeFreezes(void)
         }
     }
     syncEvents.playingEvents = FALSE;
-    for (dev = inputInfo.devices; dev; dev = dev->next) {
+    /* mmc: [24 gen 06] a quick attempt to fix: */
+    devices = inputInfo.devices?inputInfo.devices:inputInfo.off_devices;
+
+    for (dev = devices; dev; dev = dev->next) {
         if (DevHasCursor(dev)) {
             /* the following may have been skipped during replay,
                so do it now */
@@ -2003,15 +2011,20 @@ ProcAllowEvents(ClientPtr client)
 void
 ReleaseActiveGrabs(ClientPtr client)
 {
-    DeviceIntPtr dev;
+    DeviceIntPtr dev, devices;
     Bool done;
 
     /* XXX CloseDownClient should remove passive grabs before
      * releasing active grabs.
      */
+    /* mmc: [24 gen 06] a quick attempt to fix: */
+    devices = inputInfo.devices?inputInfo.devices:inputInfo.off_devices;
+#if DEBUG_MMC
+    ErrorF("%s\n", __FUNCTION__);
+#endif
     do {
         done = TRUE;
-        for (dev = inputInfo.devices; dev; dev = dev->next) {
+        for (dev = devices; dev; dev = dev->next) {
             if (dev->deviceGrab.grab &&
                 SameClient(dev->deviceGrab.grab, client)) {
                 (*dev->deviceGrab.DeactivateGrab) (dev);
