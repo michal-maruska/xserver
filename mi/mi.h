@@ -205,6 +205,9 @@ extern _X_EXPORT void mieqProcessDeviceEvent(DeviceIntPtr /* dev */ ,
 extern _X_EXPORT void mieqProcessInputEvents(void
     );
 
+extern _X_EXPORT void mieqProcessInputEventsTime(Time
+    );
+
 extern _X_EXPORT void mieqAddCallbackOnDrained(CallbackProcPtr callback,
                                                void *param);
 
