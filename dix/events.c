@@ -220,6 +220,12 @@ static Bool IsWrongPointerBarrierClient(ClientPtr client,
 /** Key repeat hack. Do not use but in TryClientEvents */
 extern BOOL EventIsKeyRepeat(xEvent *event);
 
+/* mmc: i should dismantle this tracing. But later. */
+#define DEBUG_MMC 1
+#undef DEBUG
+#define DEBUG 1
+#include <color-debug.h>
+
 /**
  * Main input device struct.
  *     inputInfo.pointer
