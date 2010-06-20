@@ -460,6 +460,11 @@ CheckVersion(const char *module, XF86ModuleVersionInfo * data,
             ver = LoaderVersionInfo.xinputVersion;
         else if (!strcmp(data->abiclass, ABI_CLASS_EXTENSION))
             ver = LoaderVersionInfo.extensionVersion;
+#if 0
+        /* mmc: todo! */
+        else if (!strcmp(data->abiclass, ABI_CLASS_INPUT))
+            ver = LoaderVersionInfo.inputVersion;
+#endif
 
         abimaj = GET_ABI_MAJOR(data->abiversion);
         abimin = GET_ABI_MINOR(data->abiversion);
