@@ -575,6 +575,7 @@ AC_ARG_ENABLE(linux_acpi, AS_HELP_STRING([--disable-linux-acpi], [Disable buildi
 AC_ARG_ENABLE(linux_apm, AS_HELP_STRING([--disable-linux-apm], [Disable building APM support on Linux (if available).]), [enable_linux_apm=$enableval], [enable_linux_apm=yes])
 AC_ARG_ENABLE(systemd-logind, AS_HELP_STRING([--enable-systemd-logind], [Build systemd-logind support (default: auto)]), [SYSTEMD_LOGIND=$enableval], [SYSTEMD_LOGIND=auto])
 AC_ARG_ENABLE(suid-wrapper, AS_HELP_STRING([--enable-suid-wrapper], [Build suid-root wrapper for legacy driver support on rootless xserver systems (default: no)]), [SUID_WRAPPER=$enableval], [SUID_WRAPPER=no])
+AC_ARG_ENABLE(pipeline,      AS_HELP_STRING([--enable-pipeline], [Use the new keyboard event processing pipeline (default: no)]), [MMC_PIPELINE=$enableval], [MMC_PIPELINE=no])
 
 dnl DDXes.
 AC_ARG_ENABLE(xorg,    	      AS_HELP_STRING([--enable-xorg], [Build Xorg server (default: auto)]), [XORG=$enableval], [XORG=auto])
@@ -1337,6 +1338,13 @@ XI_INC='-I$(top_srcdir)/Xi'
 AM_CONDITIONAL(XF86UTILS, test "x$XF86UTILS" = xyes)
 AM_CONDITIONAL(VGAHW, test "x$VGAHW" = xyes)
 AM_CONDITIONAL(INT10MODULE, test "x$INT10MODULE" = xyes)
+
+AM_CONDITIONAL(MMC_PIPELINE, [test "x$MMC_PIPELINE" = xyes])
+if test "x$MMC_PIPELINE" = xyes; then
+	AC_DEFINE(MMC_PIPELINE, 1, [use the alternative pipeline of keyboard input events])
+fi
+AC_SUBST(MMC_PIPELINE)
+
 
 AC_DEFINE(SHAPE, 1, [Support SHAPE extension])
 
