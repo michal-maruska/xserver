@@ -109,6 +109,9 @@
 /* System has wscons console */
 #undef WSCONS_SUPPORT
 
+/* mmc's alternative routing of keyboard events */
+#undef MMC_PIPELINE
+
 /* System has /dev/xf86 aperture driver */
 #undef HAS_APERTURE_DRV
 
