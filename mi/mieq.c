@@ -253,11 +253,22 @@ mieqEnqueue(DeviceIntPtr pDev, InternalEvent *e)
     memcpy(evt, e, evlen);
 
     time = e->any.time;
+
+#if !MMC_PIPELINE
+    /* I don't want any arbitrary changes to the event timestamps.
+       So skip this.
+       This ensures that events from DIfferent devices have monotonic
+       time --- but it's fake, the sequence might be different.
+       after some processing, those events join in the DIX. There
+       we equalize them again. So what is the gain here?
+    */
+
     /* Make sure that event times don't go backwards - this
      * is "unnecessary", but very useful. */
     if (time < miEventQueue.lastEventTime &&
         miEventQueue.lastEventTime - time < 10000)
         e->any.time = miEventQueue.lastEventTime;
+#endif
 
     miEventQueue.lastEventTime = evt->any.time;
     miEventQueue.events[oldtail].pScreen = pDev ? EnqueueScreen(pDev) : NULL;
