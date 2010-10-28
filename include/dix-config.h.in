@@ -521,4 +521,7 @@
 /* Have isastream */
 #undef HAVE_ISASTREAM
 
+/* define to 1 to use an alternative key-event handling. */
+#undef MMC_PIPELINE
+
 #endif /* _DIX_CONFIG_H_ */
