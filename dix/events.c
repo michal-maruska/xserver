@@ -1070,9 +1070,31 @@ MonthChangedOrBadTime(CARD32 *ms)
      * backwards when it should not.  Here we ensure a decent time.
      */
     if ((currentTime.milliseconds - *ms) > TIMESLOP)
+    /* mmc: I want to solve it by reordering the events. But I think,
+     * that time going backwards in the events is OK if they come from a
+     * previously frozen device.
+     * Is replaying from different pipelines synced? */
+
         currentTime.months++;
-    else
+    else {
+#if DEBUG_MMC
+        ErrorF("%s%s%s\n\tevent time: %u\n\tcurrenttime (variable): %u (month %u)"
+               "..... difference: %ld\n",
+               color_green, __FUNCTION__, color_reset,
+               *ms,
+               currentTime.milliseconds,
+               currentTime.months,
+               /* careful about difference of unsigned longs: */
+               (currentTime.milliseconds > *ms)?
+               (long) (currentTime.milliseconds - *ms):
+               (- (long) (*ms - currentTime.milliseconds)));
+#endif
+
+#if !MMC_PIPELINE
+        /* [03 giu 05] ... so this can be re-enabled */
         *ms = currentTime.milliseconds;
+#endif
+    };
 }
 
 void
@@ -1086,6 +1108,9 @@ NoticeTime(const DeviceIntPtr dev, TimeStamp time)
     LastEventTimeToggleResetFlag(XIAllDevices, TRUE);
 }
 
+
+/* This tries to push ahead currentTime.
+   But sometimes it could overwrite the event time! */
 static void
 NoticeTimeMillis(const DeviceIntPtr dev, CARD32 *ms)
 {
