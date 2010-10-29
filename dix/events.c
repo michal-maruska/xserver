@@ -1774,10 +1774,15 @@ ActivateKeyboardGrab(DeviceIntPtr keybd, GrabPtr grab, TimeStamp time,
 	! (grabinfo->grab && oldWin == grabinfo->grab->window
 			  && oldWin == grab->window))
         DoFocusEvents(keybd, oldWin, grab->window, NotifyGrab);
+#if MMC_PIPELINE
+    /* TimeStamp vs */
+    grabinfo->grabTime = time;
+#else
     if (syncEvents.playingEvents)
         grabinfo->grabTime = syncEvents.time;
     else
         grabinfo->grabTime = time;
+#endif  /* MMC_PIPELINE */
     grabinfo->grab = AllocGrab(grab);
     grabinfo->fromPassiveGrab = passive;
     grabinfo->implicitGrab = passive & ImplicitGrabMask;
