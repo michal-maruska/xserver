@@ -205,6 +205,11 @@ SetInputCheck(HWEventQueuePtr c0, HWEventQueuePtr c1)
 void
 UpdateCurrentTime(void)
 {
+#if 1
+    if (*checkForInput[0] != *checkForInput[1])
+        ProcessInputEvents();
+
+#else
     TimeStamp systime;
 
     /* To avoid time running backwards, we must call GetTimeInMillis before
@@ -216,22 +221,32 @@ UpdateCurrentTime(void)
         systime.months++;
     if (InputCheckPending())
         ProcessInputEvents();
-    if (CompareTimeStamps(systime, currentTime) == LATER)
-        currentTime = systime;
+#if mmc_debug
+    if (CompareTimeStamps(systime, currentTime) == LATER) {
+        ErrorF("%s: %u->%u\n", __FUNCTION__, currentTime.milliseconds,
+               systime.milliseconds);
+	// currentTime = systime;
+    }
+#endif
+#endif
 }
 
 /* Like UpdateCurrentTime, but can't call ProcessInputEvents */
 void
 UpdateCurrentTimeIf(void)
 {
+#if mmc_debug
     TimeStamp systime;
-
     systime.months = currentTime.months;
     systime.milliseconds = GetTimeInMillis();
     if (systime.milliseconds < currentTime.milliseconds)
         systime.months++;
-    if (CompareTimeStamps(systime, currentTime) == LATER)
-        currentTime = systime;
+    if (CompareTimeStamps(systime, currentTime) == LATER) {
+        ErrorF("%s: %u->%u\n", __FUNCTION__, currentTime.milliseconds,
+               systime.milliseconds);
+	// currentTime = systime;
+    }
+#endif
 }
 
 #undef SMART_DEBUG
