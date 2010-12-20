@@ -273,6 +273,9 @@ AddInputDevice(ClientPtr client, DeviceProc deviceProc, Bool autoStart)
     dev->public.processInputProc = ProcessOtherEvent;
     dev->public.realInputProc = ProcessOtherEvent;
     dev->public.enqueueInputProc = EnqueueEvent;
+
+    dev->public.thawProc = NULL; /* NoopDDA */
+    dev->public.pushTimeProc = NULL;
     dev->deviceProc = deviceProc;
     dev->startup = autoStart;
 

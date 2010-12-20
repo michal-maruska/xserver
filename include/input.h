@@ -196,6 +196,11 @@ typedef struct _DeviceRec {
     ProcessInputProc processInputProc;  /* current */
     ProcessInputProc realInputProc;     /* deliver */
     ProcessInputProc enqueueInputProc;  /* enqueue */
+    void (*thawProc)(DeviceIntPtr);
+    /* The time should be an upper bound of time for which all
+     * events were read. E.g. time obtained before select(2) on Linux which
+     * guarantees to signal *ALL* ready fds. */
+    void (*pushTimeProc)(DeviceIntPtr, Time time);
     Bool on;                    /* used by DDX to keep state */
 } DeviceRec, *DevicePtr;
 
