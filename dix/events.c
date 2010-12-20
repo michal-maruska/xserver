@@ -1069,14 +1069,14 @@ MonthChangedOrBadTime(CARD32 *ms)
      * different sources in sorted order, then it's possible for time to go
      * backwards when it should not.  Here we ensure a decent time.
      */
-    if ((currentTime.milliseconds - *ms) > TIMESLOP)
+    if ((currentTime.milliseconds - *ms) > TIMESLOP) {
     /* mmc: I want to solve it by reordering the events. But I think,
      * that time going backwards in the events is OK if they come from a
      * previously frozen device.
      * Is replaying from different pipelines synced? */
 
         currentTime.months++;
-    else {
+    } else {
 #if DEBUG_MMC
         ErrorF("%s%s%s\n\tevent time: %u\n\tcurrenttime (variable): %u (month %u)"
                "..... difference: %ld\n",
@@ -1091,6 +1091,8 @@ MonthChangedOrBadTime(CARD32 *ms)
 #endif
 
 #if !MMC_PIPELINE
+        // ok, event time is BENEATH  currentTime, let's leave it.
+        // but then grab & allow_events has to allow this situation!
         /* [03 giu 05] ... so this can be re-enabled */
         *ms = currentTime.milliseconds;
 #endif
@@ -1117,15 +1119,19 @@ NoticeTimeMillis(const DeviceIntPtr dev, CARD32 *ms)
     TimeStamp time;
     if (*ms < currentTime.milliseconds)
         MonthChangedOrBadTime(ms);
-    time.months = currentTime.months;
-    time.milliseconds = *ms;
-    NoticeTime(dev, time);
+    else {
+        // ok, going ahead!
+        time.months = currentTime.months;
+        time.milliseconds = *ms;
+        NoticeTime(dev, time);
+    }
 }
 
 void
 NoticeEventTime(InternalEvent *ev, DeviceIntPtr dev)
 {
-    if (!syncEvents.playingEvents)
+    // mmc: I should/do handle this
+    // if (!syncEvents.playingEvents)
         NoticeTimeMillis(dev, &ev->any.time);
 }
 
