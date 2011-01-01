@@ -1860,6 +1860,7 @@ DeactivateKeyboardGrab(DeviceIntPtr keybd)
     if (!master_keyboard)
         master_keyboard = inputInfo.keyboard;
 
+    ErrorF("%s, now deactivating the grab!\n", __FUNCTION__);
     if (keybd->valuator)
         keybd->valuator->motionHintWindow = NullWindow;
     keybd->deviceGrab.grab = NullGrab;
@@ -2034,6 +2035,7 @@ AllowSome(ClientPtr client, TimeStamp time, DeviceIntPtr thisDev, int newState)
                 grabinfo->sync.other = NullGrab;
             syncEvents.replayDev = thisDev;
             syncEvents.replayWin = grabinfo->grab->window;
+            ErrorF("%s, now deactivating the grab (Replay)!\n", __FUNCTION__);
             (*grabinfo->DeactivateGrab) (thisDev);
             syncEvents.replayDev = (DeviceIntPtr) NULL;
         }
@@ -3210,6 +3212,7 @@ ActivateFocusInGrab(DeviceIntPtr dev, WindowPtr old, WindowPtr win)
             IsParent(dev->deviceGrab.grab->window, win))
             return FALSE;
         DoEnterLeaveEvents(dev, dev->id, old, win, XINotifyPassiveUngrab);
+        ErrorF("%s, now deactivating the grab!\n", __FUNCTION__);
         (*dev->deviceGrab.DeactivateGrab) (dev);
     }
 
@@ -3251,6 +3254,7 @@ ActivateEnterGrab(DeviceIntPtr dev, WindowPtr old, WindowPtr win)
             IsParent(dev->deviceGrab.grab->window, win))
             return FALSE;
         DoEnterLeaveEvents(dev, dev->id, old, win, XINotifyPassiveUngrab);
+        ErrorF("%s, now deactivating the grab!\n", __FUNCTION__);
         (*dev->deviceGrab.DeactivateGrab) (dev);
     }
 
