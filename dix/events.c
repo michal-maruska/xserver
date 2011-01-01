@@ -5581,9 +5581,15 @@ ProcUngrabKeyboard(ClientPtr client)
         else if (CompareTimeStamps(time, device->deviceGrab.grabTime)
                  == EARLIER)
             ErrorF("time earlier than the Grab!\n");
+        else if (! grab)
+            ErrorF("not grabbed at all!\n");
+        else if (!SameClient(grab, client))
+            ErrorF("not grabbed or this client! %x %x\n",
+                   CLIENT_BITS(grab->resource), (client)->clientAsMask);
         else
-            ErrorF("either not grabbed or by other client!\n");
+            ErrorF("not a core grab %d!\n", grab->grabtype);
 #endif
+
     }
     return Success;
 }
