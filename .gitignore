@@ -1,3 +1,18 @@
+build-main/
+build-udeb
+debian/tmp
+debian/xdmx-tools
+debian/xdmx
+debian/xnest
+debian/xserver-common/
+debian/xserver-xephyr/
+debian/xserver-xfbdev
+debian/xserver-xorg-core
+debian/xserver-xorg-core-dbg
+debian/xserver-xorg-core-udeb
+debian/xserver-xorg-dev
+debian/xvfb
+stampdir
 #
 #		X.Org module default exclusion patterns
 #		The next section if for module specific patterns
