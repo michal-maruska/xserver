@@ -1812,6 +1812,29 @@ ProcessGestureEvent(InternalEvent *ev, DeviceIntPtr dev)
         (*dev->deviceGrab.DeactivateGrab) (dev);
 }
 
+static const char* event_names[] = {
+    "KeyPress",
+    "KeyRelease",
+    "ButtonPress",
+    "ButtonRelease",
+    "Motion",
+    "Enter",
+    "Leave",
+    "FocusIn",
+    "FocusOut",
+    "ProximityIn",
+    "ProximityOut",
+    "DeviceChanged",
+    "Hierarchy",
+    "DGAEvent",
+    "RawKeyPress",
+    "RawKeyRelease",
+    "RawButtonPress",
+    "RawButtonRelease",
+    "RawMotion",
+    "XQuartz"
+};
+
 /**
  * Process DeviceEvents and DeviceChangedEvents.
  */
@@ -1826,6 +1849,20 @@ ProcessDeviceEvent(InternalEvent *ev, DeviceIntPtr device)
     int corestate;
     DeviceIntPtr mouse = NULL, kbd = NULL;
     DeviceEvent *event = &ev->device_event;
+
+    // CHECKEVENT(ev);
+
+    ErrorF("%s: %s %s\n", __FUNCTION__, device->name, event_names[ev->any.type - 2 ]);
+#if 0
+    if (ev->any.type == ET_RawKeyPress ||
+        ev->any.type == ET_RawKeyRelease ||
+        ev->any.type == ET_RawButtonPress ||
+        ev->any.type == ET_RawButtonRelease ||
+        ev->any.type == ET_RawMotion) {
+        ProcessRawEvent(&ev->raw_event, device);
+        return;
+    }
+#endif
 
     if (IsPointerDevice(device)) {
         kbd = GetMaster(device, KEYBOARD_OR_FLOAT);
