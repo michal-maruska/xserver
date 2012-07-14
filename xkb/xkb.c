@@ -1725,12 +1725,25 @@ CheckKeySyms(ClientPtr client,
              CARD8 *mapWidths,
              CARD16 *symsPerKey, xkbSymMapWireDesc ** wireRtrn, int *errorRtrn, Bool doswap)
 {
+   /* mmc:
+    *   Checks consistency of the data:
+    *   - types inside an interval
+    *   - number of syms must be = width * ngroups
+    *   AND
+    *   constructs the symsPerKey mapping keycode->number.  This will be
+    *   used by the caller for checking n. of actions!
+    *   Uses mapWidths for that(?)
+    */
     register unsigned i;
     XkbSymMapPtr map;
     xkbSymMapWireDesc *wire = *wireRtrn;
 
+#if 0
+    /* mmc: Is this correct? symsPerKey would not be computed! */
+
     if (!(XkbKeySymsMask & req->present))
         return 1;
+#endif
     CHK_REQ_KEY_RANGE2(0x11, req->firstKeySym, req->nKeySyms, req, (*errorRtrn),
                        0);
     for (i = 0; i < req->nKeySyms; i++) {
@@ -1774,12 +1787,16 @@ CheckKeySyms(ClientPtr client,
             *errorRtrn = _XkbErrCode3(0x17, i + req->firstKeySym, wire->nSyms);
             return 0;
         }
+        /* Go to next? Skip the record & following syms! */
         pSyms = (KeySym *) &wire[1];
         wire = (xkbSymMapWireDesc *) &pSyms[wire->nSyms];
     }
 
+    /* mmc: Keycodes `above' affected ones: */
     map = &xkb->map->key_sym_map[i];
-    for (; i <= (unsigned) xkb->max_key_code; i++, map++) {
+
+    for (i= req->nKeySyms + req->firstKeySym;i<=(unsigned)xkb->max_key_code
+             ;i++,map++) {
         register int g, nG, w;
 
         nG = XkbKeyNumGroups(xkb, i);
@@ -2515,9 +2532,9 @@ _XkbSetMapChecks(ClientPtr client, DeviceIntPtr dev, xkbSetMapReq * req,
      * regardless of client-side flags */
 
     if (!CheckKeyTypes(client, xkb, req, (xkbKeyTypeWireDesc **) &values,
-		       &nTypes, mapWidths, doswap)) {
-	    client->errorValue = nTypes;
-	    return BadValue;
+                       &nTypes, mapWidths, doswap)) {
+            client->errorValue = nTypes;
+            return BadValue;
     }
 
     map = &xkb->map->key_sym_map[xkb->min_key_code];
