@@ -1852,9 +1852,9 @@ ProcessDeviceEvent(InternalEvent *ev, DeviceIntPtr device)
     DeviceIntPtr mouse = NULL, kbd = NULL;
     DeviceEvent *event = &ev->device_event;
 
-    // CHECKEVENT(ev);
-
+#if 0
     ErrorF("%s: %s %s\n", __FUNCTION__, device->name, event_names[ev->any.type - 2 ]);
+#endif
 #if 0
     if (ev->any.type == ET_RawKeyPress ||
         ev->any.type == ET_RawKeyRelease ||
