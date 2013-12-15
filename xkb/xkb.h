@@ -27,4 +27,21 @@ extern int ProcXkbGetKbdByName(ClientPtr client);
 extern int ProcXkbGetDeviceInfo(ClientPtr client);
 extern int ProcXkbSetDeviceInfo(ClientPtr client);
 extern int ProcXkbSetDebuggingFlags(ClientPtr client);
+
+#if MMC_PIPELINE
+// extern DevicePluginRec ar_plugin;
+
+#define INSERT_BEFORE TRUE
+#define INSERT_AFTER FALSE
+
+extern int ProcXkbSetPlugin(ClientPtr client);
+extern int ProcXkbConfigPlugin(ClientPtr client, Bool set);
+extern int ProcXkbCommandPlugin(ClientPtr client);
+extern int ProcXkbListPipeline(ClientPtr client);
+
+/* Entry from pipeline.c */
+extern void pipeline_init_plugins(void);
+extern void xkb_init_pipeline(DeviceIntPtr pXDev);
+#endif  /* MMC_PIPELINE */
+
 #endif
