@@ -7072,6 +7072,19 @@ ProcXkbDispatch(ClientPtr client)
         return ProcXkbSetDeviceInfo(client);
     case X_kbSetDebuggingFlags:
         return ProcXkbSetDebuggingFlags(client);
+#ifdef MMC_PIPELINE             /* XChangeDeviceProperty ? */
+    case X_kbSetPlugin:
+       return ProcXkbSetPlugin(client);
+    case X_kbPluginSetConfig:
+       return ProcXkbConfigPlugin(client, FALSE);
+    case X_kbPluginGetConfig:
+       return ProcXkbConfigPlugin(client, TRUE);
+    case X_kbPluginCommand:
+       return ProcXkbCommandPlugin(client);
+    case X_kbListPipeline:
+       return ProcXkbListPipeline(client);
+#endif /* MMC_PIPELINE */
+
     default:
         return BadRequest;
     }
@@ -7109,5 +7122,9 @@ XkbExtensionInit(void)
         XkbErrorBase = (unsigned char) extEntry->errorBase;
         XkbKeyboardErrorCode = XkbErrorBase + XkbKeyboard;
     }
+
+#if MMC_PIPELINE
+    pipeline_init_plugins();
+#endif
     return;
 }
