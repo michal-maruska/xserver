@@ -1440,6 +1440,9 @@ xf86PostKeyEventP(DeviceIntPtr device,
 void
 xf86PostKeyEventM(DeviceIntPtr device, unsigned int key_code, int is_down)
 {
+#if mmc_debug
+    ErrorF("%s: setting the time :)\n", __func__);
+#endif
     xf86PostKeyEventMTime(device, key_code, is_down, GetTimeInMillis());
 }
 
