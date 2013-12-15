@@ -501,7 +501,9 @@ XkbInitControls(DeviceIntPtr pXDev, XkbSrvInfoPtr xkbi)
         XkbMouseKeysAccelMask | XkbAudibleBellMask | XkbIgnoreGroupLockMask;
     if (XkbWantAccessX)
         ctrls->enabled_ctrls |= XkbAccessXKeysMask;
+#if !MMC_PIPELINE
     AccessXInit(pXDev);
+#endif
     return Success;
 }
 
@@ -647,6 +649,13 @@ InitKeyboardDeviceStructInternal(DeviceIntPtr dev, XkbRMLVOSet * rmlvo,
         XkbSetRulesUsed(rmlvo);
     }
     XkbFreeRMLVOSet(&rmlvo_dflts, FALSE);
+
+#if MMC_PIPELINE
+    if
+      // (strcmp(dev->name, "evdev keyboard") == 0)
+      (strcmp(dev->name, "Virtual core keyboard") == 0)
+      xkb_init_pipeline(dev);
+#endif  /* MMC_PIPELINE */
 
     return TRUE;
 
