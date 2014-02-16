@@ -1052,6 +1052,17 @@ QueueKeyboardEvents(DeviceIntPtr device, int type,
     queueEventList(device, InputEventList, nevents);
 }
 
+void
+QueueKeyboardEventsTime(DeviceIntPtr device, int type,
+                        int keycode, Time time)
+{
+    int nevents;
+
+    nevents = GetKeyboardEventsTime(InputEventList, device, type, keycode, time);
+    queueEventList(device, InputEventList, nevents);
+}
+
+
 /**
  * Returns a set of InternalEvents for KeyPress/KeyRelease, optionally
  * also with valuator events.
@@ -1065,8 +1076,16 @@ int
 GetKeyboardEvents(InternalEvent *events, DeviceIntPtr pDev, int type,
                   int key_code)
 {
+    return GetKeyboardEventsTime(events, pDev, type, key_code,
+                                 GetTimeInMillis());
+}
+
+int
+GetKeyboardEventsTime(InternalEvent *events, DeviceIntPtr pDev, int type,
+                  int key_code, Time time)
+{
     int num_events = 0;
-    CARD32 ms = 0;
+    CARD32 ms = time;
     DeviceEvent *event;
     RawDeviceEvent *raw;
     enum DeviceEventSource source_type = EVENT_SOURCE_NORMAL;
@@ -1109,8 +1128,6 @@ GetKeyboardEvents(InternalEvent *events, DeviceIntPtr pDev, int type,
             pDev->key->xkbInfo->desc->map->modmap[key_code])
             return 0;
     }
-
-    ms = GetTimeInMillis();
 
     if (source_type == EVENT_SOURCE_NORMAL) {
         raw = &events->raw_event;
