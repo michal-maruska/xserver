@@ -1417,6 +1417,12 @@ xf86PostButtonEventM(DeviceIntPtr device,
                        flags, mask);
 }
 
+/* mmc:
+ * xf86PostKeyEvent  ->  VA_ version
+ * xf86PostKeyEventP ->  C array
+ *                       bit Mask ->    xf86PostKeyEventM
+ * xf86PostKeyboardEvent ->  no valuators, pure keyboard.
+ * */
 void
 xf86PostKeyEvent(DeviceIntPtr device, unsigned int key_code, int is_down)
 {
