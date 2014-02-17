@@ -1341,7 +1341,7 @@ ComputeFreezes(void)
      * the possibility to hold events in own buffers, this latter condition is no more
      * valid. Or we should explicitely ask the plugin(s).
      *
-     * Test if we have any event: 
+     * Test if we have any event:
      * replayDev: keeps an event (to be replayed).
      * syncEvents.pending: any event on the queue ....
      *
