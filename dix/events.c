@@ -1137,6 +1137,8 @@ LastEventTimeToggleResetAll(Bool state)
  *            The following procedures deal with synchronous events       *
  **************************************************************************/
 
+/* mmc: with MMC_PIPELINE keyboard events don't use this. They are enqueued
+   in preceding plugins (the ../xkb/freeze-queue.c). */
 /**
  * EnqueueEvent is a device's processInputProc if a device is frozen.
  * Instead of delivering the events to the client, the event is tacked onto a
@@ -1239,10 +1241,13 @@ PlayReleasedEvents(void)
  restart:
     xorg_list_for_each_entry_safe(qe, tmp, &syncEvents.pending, next) {
         if (!qe->device->deviceGrab.sync.frozen) {
+            /* mmc: device of _this_ event,   otherwise just skip over  */
             xorg_list_del(&qe->next);
             pDev = qe->device;
             if (qe->event->any.type == ET_Motion)
                 CheckVirtualMotion(pDev, qe, NullWindow);
+            /* mmc: what time is kept here? Of the currently processed
+	       event i.e. the last one leaving this queue? */
             syncEvents.time.months = qe->months;
             syncEvents.time.milliseconds = qe->event->any.time;
 #ifdef PANORAMIX
@@ -1276,6 +1281,7 @@ PlayReleasedEvents(void)
 #endif
             (*qe->device->public.processInputProc) (qe->event, qe->device);
             free(qe);
+            /* mmc: still something not-frozen? */
             for (dev = inputInfo.devices; dev && dev->deviceGrab.sync.frozen;
                  dev = dev->next);
             if (!dev)
@@ -1463,6 +1469,11 @@ ScreenRestructured(ScreenPtr pScreen)
 }
 #endif
 
+/* mmc:
+ *   walks the SyncEvents queue, and `distributes' to the devices if not frozen.
+ *   i.e. calls the processInputProc
+ *   which is supposed to be the non enqueueing one (of course).
+ */
 static void
 CheckGrabForSyncs(DeviceIntPtr thisDev, Bool thisMode, Bool otherMode)
 {
@@ -1473,14 +1484,28 @@ CheckGrabForSyncs(DeviceIntPtr thisDev, Bool thisMode, Bool otherMode)
         thisDev->deviceGrab.sync.state = FROZEN_NO_EVENT;
     else {                      /* free both if same client owns both */
         thisDev->deviceGrab.sync.state = THAWED;
+        /* if the client explicitely grabbed a device which was previously
+         * grabbed as a side effect of grabbing another device, then remove
+         * that link. The client must manage this device explicitely from
+         * now. */
+
+	/* if frozen by a grab of a different client?
+	   when this (new) client ungrabs, the other one regains ? */
+
         if (thisDev->deviceGrab.sync.other &&
             (CLIENT_BITS(thisDev->deviceGrab.sync.other->resource) ==
              CLIENT_BITS(grab->resource)))
+            /* we had a grab (which forced Sync on this device.
+               This one (came later) does not. this releases it!! */
             thisDev->deviceGrab.sync.other = NullGrab;
     }
 
     if (IsMaster(thisDev)) {
         dev = GetPairedDevice(thisDev);
+        /* mmc:  if we have a grab on device A, and we have a passive grab on B, w/ async mode for "others", then
+         * we lose the sync grab on A? */
+	/* we force the grab on others.  if someone else was having a grab
+	   ... this overwrites it. */
         if (otherMode == GrabModeSync)
             dev->deviceGrab.sync.other = grab;
         else {                  /* free both if same client owns both */
@@ -1828,12 +1853,24 @@ DeactivateKeyboardGrab(DeviceIntPtr keybd)
 
     if (!wasImplicit && grab->grabtype == XI2)
         ReattachToOldMaster(keybd);
-
+#if 0
+    /* mmc: This DeactivateKeyboardGrab does not set  grab->frozen = FALSE !
+     * But it will be set in FreezeThaw unless: */
+    if (keybd->sync.other)
+       {
+          ErrorF("%s: this would be a bug!\n", __FUNCTION__);
+          /*
+          || (dev->sync.state >= FROZEN)
+          dev->sync.frozen = frozen; */
+       };
+#endif
     ComputeFreezes();
 
     FreeGrab(grab);
 }
 
+/* mmc:  freeze/thaw other devices depending on otherMode.  */
+/* mmc: I leave this buggy: inputInfo.devices when in another VT. */
 void
 AllowSome(ClientPtr client, TimeStamp time, DeviceIntPtr thisDev, int newState)
 {
@@ -1857,8 +1894,24 @@ AllowSome(ClientPtr client, TimeStamp time, DeviceIntPtr thisDev, int newState)
         if (dev == thisDev)
             continue;
         if (devgrabinfo->grab && SameClient(devgrabinfo->grab, client)) {
+	    /* another device grabbed by this same client ->  */
+            /* fixme: this is strange: either not grabbed by _this_ client,
+             * or the grab predates ... why do we need the earlier
+             * grab?
+             *
+             * `thisGrabbed' is FALSE, if this device is grabbed _not_ b/c
+             * a grab in it, but b/c of a grab on another device, which
+             * had SyncMode for other devices....
+             *
+             *  Do we want to find that grab ?
+             */
+            /* mmc: seems the order matters !  take the 1st grabTime not
+             * later than */
+
             if (!(thisGrabbed || otherGrabbed) ||
                 (CompareTimeStamps(devgrabinfo->grabTime, grabTime) == LATER))
+		/* a > b   other device was grabbed _before_ this one */
+		/*  and we push back the ...  why ?? */
                 grabTime = devgrabinfo->grabTime;
             otherGrabbed = TRUE;
             if (grabinfo->sync.other == devgrabinfo->grab)
@@ -3933,7 +3986,6 @@ ActivatePassiveGrab(DeviceIntPtr device, GrabPtr grab, InternalEvent *event,
 
     if (xE) {
         FixUpEventFromWindow(pSprite, xE, grab->window, None, TRUE);
-
         /* XXX: XACE? */
         TryClientEvents(rClient(grab), device, xE, count,
                         GetEventFilter(device, xE),
@@ -4594,10 +4646,22 @@ RecalculateDeliverableEvents(WindowPtr pWin)
     OtherClients *others;
     WindowPtr pChild;
 
+    /*        Root
+     *
+     *      parent         ->  deliverableEvents
+     *      /
+     *    win -> owner      ->  DontPropagateMask,
+     *    /  \->  others
+     *   /    \
+     *  child->sibling ....
+     *
+     *  it traverses the entire subtree ! */
+
     pChild = pWin;
     while (1) {
         if (pChild->optional) {
             pChild->optional->otherEventMasks = 0;
+            /*  sum of others. sort-of a `cache' */
             for (others = wOtherClients(pChild); others; others = others->next) {
                 pChild->optional->otherEventMasks |= others->mask;
             }
@@ -4927,6 +4991,7 @@ DeviceEnterLeaveEvent(DeviceIntPtr mouse,
     free(event);
 }
 
+/* this is during _asynchro_ grab. */
 void
 CoreFocusEvent(DeviceIntPtr dev, int type, int mode, int detail, WindowPtr pWin)
 {
