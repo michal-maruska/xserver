@@ -706,6 +706,52 @@ void push_event_to_device(DeviceIntPtr dev, InternalEvent *event, ScreenPtr scre
         miPointerUpdateSprite(dev);
 }
 
+/*  so which one first?
+ *  every device ... as on the DIX side, is awaiting events, and time.
+ *  so, we take the earliest event, and possibly Push the time on all.
+ *  then we push the event.
+ *  so:  time - event - time - event ....
+ *
+ */
+#if USE_SEPARATE_QUEUES
+/**< Time in ms. */
+
+static inline
+int EVENT_EARLIER(Time time, Time time_b)
+{
+    return (time < time_b);
+}
+
+
+/* return the index of the queue. Needs the mutex.
+ * returns -1 if none. */
+static
+int find_first_non_empty(EventRec **ret_event)
+{
+    int i;
+    int earliest = -1;
+    EventQueueRec const *eq;           /* const */
+    EventRec *earliestEvent = NULL;
+    EventRec *e = NULL;
+    for (i=0; i< mi_devices; i++) {
+        eq = queues[i];
+
+        if (eq->head != eq->tail) {
+            e = &eq->events[eq->head];
+            if (!earliestEvent
+                || (EVENT_EARLIER(e->event->any.time, earliestEvent->event->any.time))) {
+                earliest = i;
+                earliestEvent = e;
+            }
+        }
+    }
+
+    *ret_event = earliestEvent;
+    return earliest;
+}
+#endif // USE_SEPARATE_QUEUES
+
+
 void
 mieqProcessInputEvents(void)
 {
@@ -746,6 +792,48 @@ mieqProcessInputEvents(void)
      *  device[i] -> first y of yyyy
      * here I would take the first of ND number-of-devices.
      * */
+    Bool still_pushing_time = TRUE;
+    Time pushed_time = 0;
+    while ((index = find_first_non_empty(&e)) != -1)
+    {
+        EventQueuePtr eq;
+
+        event = *e->event;
+        dev = devices[index]; //  e->pDev;
+        screen = e->pScreen;
+
+        /* remove from the queue: */
+        eq = queues[index];
+        eq->head = (eq->head + 1) % eq->nevents;
+
+        /* now can unlock: */
+#ifdef XQUARTZ
+        pthread_mutex_unlock(&miEventQueueMutex);
+#endif
+
+        // push time into all devices
+        // mmc: that's why I need the @now to limit this:
+        // Imagine the last read (b/c of select) is from mouse,
+        // and it deliveres `last_minute' events.
+        // Cannot be applied to other devices!
+        ErrorF("maybe push time %lu\n", event.any.time);
+        if (still_pushing_time
+            && (time_max > event.any.time)) {
+            if (pushed_time < time_max) {
+                push_time_to_devices(time_max);
+            }
+            still_pushing_time = FALSE;
+        } else {
+            push_time_to_devices(event.any.time);
+        }
+        // push the event.
+        push_event_to_device(dev, &event, screen);
+
+#ifdef XQUARTZ
+        pthread_mutex_lock(&miEventQueueMutex);
+#endif
+    }
+
     while (miEventQueue.head != miEventQueue.tail) {
         e = &miEventQueue.events[miEventQueue.head];
 
