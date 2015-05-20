@@ -733,6 +733,19 @@ mieqProcessInputEvents(void)
         miEventQueue.dropped = 0;
     }
 
+
+    /* mmc: take the one with earliest timestamp:
+     * could be:
+     * xxxx yyyyy  ||  xxxx yyyy
+     * mmc: I want to have separate queues ....
+     *
+     *while (1) { find ; if !found  break; process }
+     * So, first I want to know how many events
+     * how many generations -- reads ?
+     * do we even select() when this queue is non-empty?
+     *  device[i] -> first y of yyyy
+     * here I would take the first of ND number-of-devices.
+     * */
     while (miEventQueue.head != miEventQueue.tail) {
         e = &miEventQueue.events[miEventQueue.head];
 
