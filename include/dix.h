@@ -233,9 +233,17 @@ extern _X_EXPORT int AlterSaveSetForClient(ClientPtr /*client */ ,
 
 extern _X_EXPORT void DeleteWindowFromAnySaveSet(WindowPtr /*pWin */ );
 
-extern _X_EXPORT void BlockHandler(void *timeout);
+extern _X_EXPORT void BlockHandler(void *Timeout,
+                                   Time now);
 
-extern _X_EXPORT void WakeupHandler(int result);
+/* Possible BlockHandler has some points in time and when asked for a timeout,
+ * it * needs to compare the current time with those points to return the
+ * timeout. Therefore WaitForSomething has to provide us the current time. */
+
+/* When woken by kernel, we need to know some time of the wakeup:
+   Time of last event or (guaranteed) non event. */
+extern _X_EXPORT void WakeupHandler(int result,
+                                    Time now);
 
 void
 EnableLimitedSchedulingLatency(void);
@@ -246,12 +254,26 @@ DisableLimitedSchedulingLatency(void);
 typedef void (*ServerBlockHandlerProcPtr) (void *blockData,
                                            void *timeout);
 
+/* BlockHandlerProcPtr is typedef'd in x11proto/Xdefs.h
+ * This version accepts the current time. */
+typedef void (*TimeBlockHandlerProcPtr)(void *blockData,
+                                        void *timeout,
+                                        Time currentTime);
+
 typedef void (*ServerWakeupHandlerProcPtr) (void *blockData,
                                             int result);
+
+typedef void (*TimeWakeupHandlerProcPtr)(void *blockData,
+                                          int  result,
+                                          Time now);
 
 extern _X_EXPORT Bool RegisterBlockAndWakeupHandlers(ServerBlockHandlerProcPtr blockHandler,
                                                      ServerWakeupHandlerProcPtr wakeupHandler,
                                                      void *blockData);
+
+extern _X_EXPORT Bool RegisterTimeBlockAndWakeupHandlers(TimeBlockHandlerProcPtr blockHandler,
+                                                         TimeWakeupHandlerProcPtr wakeupHandler,
+                                                         void *blockData);
 
 extern _X_EXPORT void RemoveBlockAndWakeupHandlers(ServerBlockHandlerProcPtr blockHandler,
                                                    ServerWakeupHandlerProcPtr wakeupHandler,
