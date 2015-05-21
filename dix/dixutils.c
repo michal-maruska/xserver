@@ -360,10 +360,12 @@ NoopDDA(void)
 }
 
 typedef struct _BlockHandler {
+    /* fixme: union? */
     ServerBlockHandlerProcPtr BlockHandler;
     ServerWakeupHandlerProcPtr WakeupHandler;
     void *blockData;
     Bool deleted;
+    Bool wantsTime;
 } BlockHandlerRec, *BlockHandlerPtr;
 
 static BlockHandlerPtr handlers;
@@ -376,17 +378,24 @@ static Bool handlerDeleted;
  *
  *  \param pTimeout   DIX doesn't want to know how OS represents time
  *  \param pReadMask  nor how it represents the det of descriptors
+ *  \param now        time when the select() will be called (lower bound).
+ *                    so, (now + pTimeout) is the next wake time..
  */
 void
-BlockHandler(void *pTimeout)
+BlockHandler(void *pTimeout, Time now)
 {
     int i, j;
 
     ++inHandler;
     for (i = 0; i < numHandlers; i++)
         if (!handlers[i].deleted)
-            (*handlers[i].BlockHandler) (handlers[i].blockData, pTimeout);
-
+            if (handlers[i].wantsTime) {
+                (* (TimeBlockHandlerProcPtr) handlers[i].BlockHandler)
+                    (handlers[i].blockData, pTimeout, now);
+            } else {
+                /* These don't use the NOW argument */
+                (*handlers[i].BlockHandler) (handlers[i].blockData, pTimeout);
+            }
     for (i = 0; i < screenInfo.numGPUScreens; i++)
         (*screenInfo.gpuscreens[i]->BlockHandler) (screenInfo.gpuscreens[i], pTimeout);
 
@@ -411,9 +420,11 @@ BlockHandler(void *pTimeout)
  *
  *  \param result    32 bits of undefined result from the wait
  *  \param pReadmask the resulting descriptor mask
+ *  \param now       current time, i.e. time of the last (non-)event
+ *                   from kernel
  */
 void
-WakeupHandler(int result)
+WakeupHandler(int result, Time now)
 {
     int i, j;
 
@@ -424,7 +435,13 @@ WakeupHandler(int result)
         (*screenInfo.gpuscreens[i]->WakeupHandler) (screenInfo.gpuscreens[i], result);
     for (i = numHandlers - 1; i >= 0; i--)
         if (!handlers[i].deleted)
-            (*handlers[i].WakeupHandler) (handlers[i].blockData, result);
+            if (handlers[i].wantsTime)
+                (*(TimeWakeupHandlerProcPtr)handlers[i].WakeupHandler)
+                    (handlers[i].blockData,
+                     result, now);
+            else
+                (*handlers[i].WakeupHandler) (handlers[i].blockData,
+                                              result);
     if (handlerDeleted) {
         for (i = 0; i < numHandlers;)
             if (handlers[i].deleted) {
@@ -444,9 +461,10 @@ WakeupHandler(int result)
  * get called until next time
  */
 Bool
-RegisterBlockAndWakeupHandlers(ServerBlockHandlerProcPtr blockHandler,
+do_RegisterBlockAndWakeupHandlers(ServerBlockHandlerProcPtr blockHandler,
                                ServerWakeupHandlerProcPtr wakeupHandler,
-                               void *blockData)
+                               void *blockData,
+                               Bool wantsTime)
 {
     BlockHandlerPtr new;
 
@@ -462,8 +480,30 @@ RegisterBlockAndWakeupHandlers(ServerBlockHandlerProcPtr blockHandler,
     handlers[numHandlers].WakeupHandler = wakeupHandler;
     handlers[numHandlers].blockData = blockData;
     handlers[numHandlers].deleted = FALSE;
+    handlers[numHandlers].wantsTime = wantsTime;
     numHandlers = numHandlers + 1;
     return TRUE;
+}
+
+Bool
+RegisterBlockAndWakeupHandlers(ServerBlockHandlerProcPtr blockHandler,
+                                ServerWakeupHandlerProcPtr wakeupHandler,
+                                void *blockData)
+{
+
+    return do_RegisterBlockAndWakeupHandlers(blockHandler, wakeupHandler,
+                                             blockData,
+                                             FALSE);
+}
+
+Bool
+RegisterTimeBlockAndWakeupHandlers(TimeBlockHandlerProcPtr blockHandler,
+                               TimeWakeupHandlerProcPtr wakeupHandler,
+                               void *blockData)
+{
+    return do_RegisterBlockAndWakeupHandlers((ServerBlockHandlerProcPtr)blockHandler,
+                                             (ServerWakeupHandlerProcPtr)wakeupHandler,
+                                             blockData, TRUE);
 }
 
 void
