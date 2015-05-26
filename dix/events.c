@@ -221,7 +221,7 @@ static Bool IsWrongPointerBarrierClient(ClientPtr client,
 extern BOOL EventIsKeyRepeat(xEvent *event);
 
 /* mmc: i should dismantle this tracing. But later. */
-#define DEBUG_MMC 1
+#define DEBUG_MMC 0
 #undef DEBUG
 #define DEBUG 1
 #include <color-debug.h>
