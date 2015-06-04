@@ -1828,7 +1828,9 @@ DeactivateKeyboardGrab(DeviceIntPtr keybd)
     Bool wasImplicit = (keybd->deviceGrab.fromPassiveGrab &&
                         keybd->deviceGrab.implicitGrab);
 
+#if DEBUG_MMC
     ErrorF("%s, now deactivating the grab!\n", __FUNCTION__);
+#endif
     if (keybd->valuator)
         keybd->valuator->motionHintWindow = NullWindow;
     keybd->deviceGrab.grab = NullGrab;
@@ -2003,7 +2005,9 @@ AllowSome(ClientPtr client, TimeStamp time, DeviceIntPtr thisDev, int newState)
                 grabinfo->sync.other = NullGrab;
             syncEvents.replayDev = thisDev;
             syncEvents.replayWin = grabinfo->grab->window;
+#if DEBUG_MMC
             ErrorF("%s, now deactivating the grab (Replay)!\n", __FUNCTION__);
+#endif
             (*grabinfo->DeactivateGrab) (thisDev);
             syncEvents.replayDev = (DeviceIntPtr) NULL;
         }
