@@ -76,6 +76,7 @@ typedef struct _Event {
 } EventRec, *EventPtr;
 
 
+#define USE_SEPARATE_QUEUES 1
 /* mmc: keep 1 per device. allocate/deallocate as needed. */
 typedef struct _EventQueue {
     HWEventQueueType head, tail;        /* long for SetInputCheck */
