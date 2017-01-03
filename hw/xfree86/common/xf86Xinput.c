@@ -65,6 +65,7 @@
 #include "loaderProcs.h"
 #include "systemd-logind.h"
 
+#include <linux/input.h>
 #include "exevents.h"           /* AddInputDevice */
 #include "exglobals.h"
 #include "eventstr.h"
@@ -1437,6 +1438,29 @@ xf86PostKeyEventP(DeviceIntPtr device,
     xf86PostKeyEventM(device, key_code, is_down);
 }
 
+static void
+maybe_special_function(DeviceIntPtr device,unsigned int key_code,
+                       int is_down)
+{
+#define MIN_KEYCODE 8
+    InputInfoPtr pInfo = (InputInfoPtr) device->public.devicePrivate;
+    if (strcmp(pInfo->type_name,XI_KEYBOARD) == 0) {
+        if ((/* is_keyboard */ is_down)
+            /* mmc: fixme: at least check that those keys are on the device. */
+            && key_is_down(device, MIN_KEYCODE + KEY_LEFTCTRL, KEY_POSTED)
+            && key_is_down(device, MIN_KEYCODE + KEY_LEFTALT, KEY_POSTED)
+            ) {
+            if ((key_code <= MIN_KEYCODE + KEY_F10) &&
+                (key_code >= MIN_KEYCODE + KEY_F1))
+            {
+                int vtno = (key_code - (KEY_F1 + MIN_KEYCODE) + 1);
+                xf86ProcessActionEvent(ACTION_SWITCHSCREEN,
+                                       (void*) &vtno);
+            }
+        }
+    }
+}
+
 void
 xf86PostKeyEventM(DeviceIntPtr device, unsigned int key_code, int is_down)
 {
@@ -1462,6 +1486,7 @@ xf86PostKeyEventMTime(DeviceIntPtr device, unsigned int key_code, int is_down, T
             return;
     }
 #endif
+    maybe_special_function(device, key_code, is_down);
     QueueKeyboardEventsTime(device,
                             is_down ? KeyPress : KeyRelease, key_code, time);
 }
