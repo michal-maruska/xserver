@@ -677,6 +677,35 @@ void push_time_to_devices(Time time)
 }
 #endif // USE_SEPARATE_QUEUES
 
+static
+void push_event_to_device(DeviceIntPtr dev, InternalEvent *event, ScreenPtr screen)
+{
+    DeviceIntPtr master = NULL;
+
+    master = (dev) ? GetMaster(dev, MASTER_ATTACHED) : NULL;
+
+    /* Why inside the loop?  Could the processing of 1 event take so much time? */
+    if (screenIsSaved == SCREEN_SAVER_ON)
+        dixSaveScreens(serverClient, SCREEN_SAVER_OFF, ScreenSaverReset);
+#ifdef DPMSExtension
+    else if (DPMSPowerLevel != DPMSModeOn)
+        SetScreenSaverTimer();
+
+    if (DPMSPowerLevel != DPMSModeOn)
+        DPMSSet(serverClient, DPMSModeOn);
+#endif
+
+    mieqProcessDeviceEvent(dev, event, screen);
+
+    /* Update the sprite now. Next event may be from different device. */
+    if (master &&
+        (event->any.type == ET_Motion ||
+         ((event->any.type == ET_TouchBegin ||
+           event->any.type == ET_TouchUpdate) &&
+          event->device_event.flags & TOUCH_POINTER_EMULATED)))
+        miPointerUpdateSprite(dev);
+}
+
 void
 mieqProcessInputEvents(void)
 {
@@ -714,29 +743,7 @@ mieqProcessInputEvents(void)
         miEventQueue.head = (miEventQueue.head + 1) % miEventQueue.nevents;
 
         input_unlock();
-
-        master = (dev) ? GetMaster(dev, MASTER_ATTACHED) : NULL;
-
-        if (screenIsSaved == SCREEN_SAVER_ON)
-            dixSaveScreens(serverClient, SCREEN_SAVER_OFF, ScreenSaverReset);
-#ifdef DPMSExtension
-        else if (DPMSPowerLevel != DPMSModeOn)
-            SetScreenSaverTimer();
-
-        if (DPMSPowerLevel != DPMSModeOn)
-            DPMSSet(serverClient, DPMSModeOn);
-#endif
-
-        mieqProcessDeviceEvent(dev, &event, screen);
-
-        /* Update the sprite now. Next event may be from different device. */
-        if (master &&
-            (event.any.type == ET_Motion ||
-             ((event.any.type == ET_TouchBegin ||
-               event.any.type == ET_TouchUpdate) &&
-              event.device_event.flags & TOUCH_POINTER_EMULATED)))
-            miPointerUpdateSprite(dev);
-
+        push_event_to_device(dev, &event, screen);
         input_lock();
     }
 
