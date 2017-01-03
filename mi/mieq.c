@@ -525,6 +525,18 @@ void
 mieqProcessInputEventsTime(Time now)
 {
     mieqProcessInputEvents();
+#if MMC_PIPELINE
+    if (now)
+    {
+        DeviceIntPtr dev = NULL;
+        for (dev = inputInfo.devices; dev; dev = dev->next)
+        {
+            if ((dev->public.pushTimeProc)
+                && (dev->time < now)) /* no fresh event */
+                (*dev->public.pushTimeProc)(dev, now);
+        }
+    }
+#endif
 }
 
 void
