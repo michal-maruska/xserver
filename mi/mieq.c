@@ -99,6 +99,10 @@ int mi_devices;                 /* number of mi devices */
 
 static Bool mieqInit_device(EventQueuePtr eq);
 
+#if USE_SEPARATE_QUEUES
+static void push_time_to_devices(Time time);
+#endif
+
 /* return FALSE on failure. Otherwise allocate in the arrays for @dev. */
 Bool mieq_init_device_queue(DeviceIntPtr dev)
 {
@@ -644,16 +648,34 @@ mieqProcessInputEventsTime(Time now)
 #if MMC_PIPELINE
     if (now)
     {
-        DeviceIntPtr dev = NULL;
-        for (dev = inputInfo.devices; dev; dev = dev->next)
-        {
-            if ((dev->public.pushTimeProc)
-                && (dev->time < now)) /* no fresh event */
-                (*dev->public.pushTimeProc)(dev, now);
-        }
+        push_time_to_devices(now);
     }
 #endif
 }
+
+#if USE_SEPARATE_QUEUES
+static
+void push_time_to_devices(Time time)
+{
+    int i;
+    DeviceIntPtr dev;
+    /* I need to push to master! */
+#if DEBUG
+    ErrorF("pushing time %" PRIu64 "\n", (unsigned long) time);
+#endif
+    for (i=0; i< mi_devices; i++) {
+        DeviceIntPtr master = NULL;
+        dev = devices[i];
+        /* mmc: when null? */
+        master = (dev) ? GetMaster(dev, MASTER_ATTACHED) : NULL;
+        dev = master;
+
+        if ((dev && dev->public.pushTimeProc)
+            && (dev->time < time)) /* no fresh event */
+            (*dev->public.pushTimeProc)(dev, time);
+    }
+}
+#endif // USE_SEPARATE_QUEUES
 
 void
 mieqProcessInputEvents(void)
