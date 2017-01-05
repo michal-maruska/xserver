@@ -1320,13 +1320,36 @@ ComputeFreezes(void)
     DeviceIntPtr replayDev = syncEvents.replayDev;
     GrabPtr grab;
     DeviceIntPtr dev;
+    Bool played = FALSE;
 
     for (dev = inputInfo.devices; dev; dev = dev->next)
         FreezeThaw(dev, dev->deviceGrab.sync.other ||
                    (dev->deviceGrab.sync.state >= FROZEN));
-    if (syncEvents.playingEvents ||
-        (!replayDev && xorg_list_is_empty(&syncEvents.pending)))
-        return;
+
+    if (syncEvents.playingEvents
+#if !MMC_PIPELINE
+    /* There are conditions, under which it is useless to proceed with this function.
+     * One of them is calling it recursively.
+     *
+     * Another one is if the queue is clearly empty.
+     * With (`processors' on the) pipelines having
+     * the possibility to hold events in own buffers, this latter condition is no more
+     * valid. Or we should explicitely ask the plugin(s).
+     *
+     * Test if we have any event: 
+     * replayDev: keeps an event (to be replayed).
+     * syncEvents.pending: any event on the queue ....
+     *
+     * I should ask all pipelines if they have some events to output (this *time*)
+     * for non-frozen devices
+     * .... conclusion: I prefer to run thawProc and see ...  */
+        || (!replayDev && xorg_list_is_empty(&syncEvents.pending))
+#endif
+        )
+      {
+          return;
+      }
+
     syncEvents.playingEvents = TRUE;
     if (replayDev) {
         InternalEvent *event = replayDev->deviceGrab.sync.event;
@@ -1364,9 +1387,27 @@ ComputeFreezes(void)
         }
     }
     for (dev = inputInfo.devices; dev; dev = dev->next) {
-        if (!dev->deviceGrab.sync.frozen) {
-            PlayReleasedEvents();
-            break;
+            if (!dev->deviceGrab.sync.frozen) {
+#if MMC_PIPELINE
+            if (dev->public.thawProc) {
+                dev->public.thawProc(dev);
+            } else
+#endif /* MMC_PIPELINE */
+            {
+                /* fixme: so previously all the queued events were in 1 queue.
+                 * Now they are in different ones. So if more device are thawn,
+                 * we don't replay them in order now! bug! */
+
+                /* I have to run thawProc for all of them.
+                 * But PlayReleasedEvents runs all events in the Syncevents queue,
+                 * so once is enough. So, i use this flipper `played' */
+                if (! played) {
+                    /* once more: this is not synchronized with the events in the
+                     * Pipeline - bug! */
+                    PlayReleasedEvents();
+                    played = TRUE;
+                }
+            }
         }
     }
     syncEvents.playingEvents = FALSE;
