@@ -1897,7 +1897,7 @@ AllowSome(ClientPtr client, TimeStamp time, DeviceIntPtr thisDev, int newState)
         if (dev == thisDev)
             continue;
         if (devgrabinfo->grab && SameClient(devgrabinfo->grab, client)) {
-	    /* another device grabbed by this same client ->  */
+            /* another device grabbed by this same client ->  */
             /* fixme: this is strange: either not grabbed by _this_ client,
              * or the grab predates ... why do we need the earlier
              * grab?
@@ -1913,8 +1913,8 @@ AllowSome(ClientPtr client, TimeStamp time, DeviceIntPtr thisDev, int newState)
 
             if (!(thisGrabbed || otherGrabbed) ||
                 (CompareTimeStamps(devgrabinfo->grabTime, grabTime) == LATER))
-		/* a > b   other device was grabbed _before_ this one */
-		/*  and we push back the ...  why ?? */
+                /* a > b   other device was grabbed _before_ this one */
+                /*  and we push back the ...  why ?? */
                 grabTime = devgrabinfo->grabTime;
             otherGrabbed = TRUE;
             if (grabinfo->sync.other == devgrabinfo->grab)
