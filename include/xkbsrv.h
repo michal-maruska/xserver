@@ -204,7 +204,11 @@ typedef struct _XkbSrvInfo {
 
 typedef struct _XkbSrvLedInfo {
     CARD16 flags;
-    CARD16 class;
+#ifdef __cplusplus
+        CARD16			cclass;
+#else
+	CARD16			class;
+#endif
     CARD16 id;
     union {
         KbdFeedbackPtr kf;
@@ -614,7 +618,11 @@ extern _X_EXPORT void XkbHandleBell(BOOL force,
                                     DeviceIntPtr kbd,
                                     CARD8 percent,
                                     void *ctrl,
+#ifdef __cplusplus
+                                    CARD8 cclass,
+#else
                                     CARD8 class,
+#endif
                                     Atom name,
                                     WindowPtr pWin,
                                     ClientPtr pClient
