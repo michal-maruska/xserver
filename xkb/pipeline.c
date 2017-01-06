@@ -112,7 +112,6 @@ xkb_init_pipeline(DeviceIntPtr device)
 }
 
 
-
 static void
 push_time_on_keyboard(DeviceIntPtr keybd, Time upper_bound)
 {
@@ -160,7 +159,7 @@ set_timeout(void *blockData, void *timeoutData, Time now)
         Time deviceTimeout = (master->pipeline->wakeup_time <= now)? 0 :
             master->pipeline->wakeup_time - now;
 
-        if (deviceTimeout < *timeout) {
+        if ( *(int*)timeout == -1 || *(int*)timeout == 0 || deviceTimeout < *timeout) {
             // calculate our timeout, and if lesser, then propagate:
             *timeout = deviceTimeout;
         }
