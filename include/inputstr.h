@@ -49,6 +49,15 @@ SOFTWARE.
 
 #include <X11/extensions/XI2proto.h>
 
+#ifdef HAVE_XORG_CONFIG_H
+// server itself
+#include "xorg-config.h"
+#else
+// drivers & apps?
+#include "xorg-server.h"
+#endif
+
+
 #include <pixman.h>
 #include "input.h"
 #include "window.h"
@@ -558,6 +567,11 @@ typedef struct _SpriteInfoRec {
 #define KEYBOARD_OR_FLOAT       5       /* Keyboard master for this device or this device if floating */
 #define POINTER_OR_FLOAT        6       /* Pointer master for this device or this device if floating */
 
+#if MMC_PIPELINE
+typedef struct _DevicePluginRec DevicePluginRec;
+typedef struct _PluginInstance PluginInstance;
+#endif
+
 typedef struct _DeviceIntRec {
     DeviceRec public;
     DeviceIntPtr next;
@@ -630,7 +644,80 @@ typedef struct _DeviceIntRec {
     int xtest_master_id;
 
     struct _SyncCounter *idle_counter;
+
+#ifdef MMC_PIPELINE
+    PluginInstance* pipeline;
+    int       pipeline_counter;
+    Time  time;
+#endif
 } DeviceIntRec;
+
+#ifdef MMC_PIPELINE
+#define plugin_waiting(plugin)    (plugin->wakeup_time != 0)
+#define plugin_frozen(plugin)    (plugin->frozen == TRUE)
+
+
+/* We have plugin classes (struct with methods), and objects (the
+ * state-data & pointer at the class. */
+
+#define PLUGIN_NAME(x)  ((x)->pclass->name)
+
+
+/* A node on a pipeline: */
+struct _PluginInstance {
+   int  id;
+   DevicePluginRec* pclass;        /* be C++ friendly */
+   DeviceIntRec*    device;     /* point back */
+
+   /* doubly linked list: */
+   PluginInstance *next;
+   PluginInstance *prev;
+
+   /* this is consulted by the previous processor.
+    * The first processor, called "queue" is never frozen. */
+   Bool frozen;
+   Time wakeup_time;  /* 0 == not waiting for anything. */
+   void* data;        /* plugin private data! */
+};
+
+
+#define PluginClass(x)  ((x)->pclass)
+
+#define CALLEE_OWNS TRUE
+#define CALLER_OWNS FALSE
+
+/* class! */
+struct _DevicePluginRec {
+   const char* name;
+   PluginInstance* (*instantiate)(const DeviceIntPtr dev, DevicePluginRec* plugin_class);
+
+   void (*ProcessEvent) (PluginInstance* plugin, InternalEvent *ev, Bool memory_ownership);
+   /* The plugin is delivered any event through this call. memory_ownership decides if the memory
+    * is to be freed by the called function (CALLEE_OWNS)
+    * or by the caller (CALLER_OWNS). */
+
+   /* push the plugin's clock, as no new event before now occured */
+   void (*ProcessTime) (PluginInstance*, Time now);
+
+
+   void (*NotifyThaw) (PluginInstance*, Time);
+
+   /* client requests for configuration */
+   int (*config) (PluginInstance*, int[5]); /* it's short */
+   int (*getconfig) (PluginInstance*, int[5], int[3]); /* it's short */
+   void (*client_command) (ClientPtr client, PluginInstance*, int, int, int, int, int);
+
+   void *module;              /* to UnloadModule */
+   int ref_count;               /* the module? */
+
+   int (*stop)(PluginInstance* plugin);
+   int (*terminate)(PluginInstance* plugin);
+   /* the plugin will de-register itself when it's ok! */
+};
+
+extern int xkb_plugin_send_reply(ClientPtr client, PluginInstance* plugin,
+                                 char* message, unsigned int lenght /*, int subtype*/);
+#endif /* MMC_PIPELINE */
 
 typedef struct {
     int numDevices;             /* total number of devices */
