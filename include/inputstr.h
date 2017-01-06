@@ -59,9 +59,9 @@ SOFTWARE.
 
 
 #include <pixman.h>
-#include "input.h"
-#include "window.h"
 #include "dixstruct.h"
+#include "window.h"
+#include "input.h"
 #include "cursorstr.h"
 #include "geext.h"
 #include "privates.h"
