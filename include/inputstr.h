@@ -573,7 +573,11 @@ typedef struct _PluginInstance PluginInstance;
 #endif
 
 typedef struct _DeviceIntRec {
+#ifdef __cplusplus
+    DeviceRec cpublic;
+#else
     DeviceRec public;
+#endif
     DeviceIntPtr next;
     Bool startup;               /* true if needs to be turned on at
                                    server initialization time */
