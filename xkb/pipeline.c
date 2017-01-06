@@ -42,7 +42,7 @@ void xkb_pipeline_init(DeviceIntPtr pXDev);
 
 static void start_plugin_pipeline(InternalEvent *event, DeviceIntPtr keybd);
 static void thaw_pipeline_end(DeviceIntPtr keybd);
-static void set_timeout(DeviceIntPtr keybd, struct timeval** wt, void *mask, Time now);
+static void set_timeout(void *blockData, void *timeout, Time now);
 static void push_time_on_keyboard(DeviceIntPtr keybd, Time upper_bound);
 
 
@@ -145,33 +145,24 @@ push_time_on_keyboard(DeviceIntPtr keybd, Time upper_bound)
 
 /* wtp can be NULL. Hence I keep `static' waittime! */
 static void
-set_timeout(DeviceIntPtr keybd, struct timeval** wtp, void *mask, Time now)
+set_timeout(void *blockData, void *timeoutData, Time now)
+// so timeout is CARD32* !!!
 {
-    struct timeval* wt = *wtp;
+    const DeviceIntPtr keybd = blockData;
+    // struct timeval* wt = *wtp;
+    // Time is ... /usr/include/X11/X.h:77:typedef CARD32
+    // which is 64 bit!
+    Time *timeout = (Time*) timeoutData;
 
-    Time timeout;
-    static struct timeval waittime;     /* (signed)  longs! */
+    const DeviceIntPtr master = (keybd) ? GetMaster(keybd, MASTER_ATTACHED) : NULL;
 
-    if (keybd->pipeline->wakeup_time) {
-        /* fixme: This should be redesigned in os/WaitFor.c */
-        if (wt == NULL)
-            *wtp = wt = &waittime;
+    if ((timeout) && master && (master->pipeline->wakeup_time != 0)) { /* 0 - no timeout! */
+        Time deviceTimeout = (master->pipeline->wakeup_time <= now)? 0 :
+            master->pipeline->wakeup_time - now;
 
-        /* unsigned */
-        timeout = (keybd->pipeline->wakeup_time <= now)? 0 :
-            keybd->pipeline->wakeup_time - now;
-
-        /* copied from os/WaitFor.c */
-        waittime.tv_sec = timeout / MILLI_PER_SECOND;
-        waittime.tv_usec = (timeout % MILLI_PER_SECOND) *
-            (1000000 / MILLI_PER_SECOND);
-
-        if (wt->tv_sec > waittime.tv_sec) {
-            wt->tv_sec = waittime.tv_sec;
-            wt->tv_usec = waittime.tv_usec;
-        } else if ((wt->tv_sec == waittime.tv_sec)
-                   && (wt->tv_usec > waittime.tv_usec)) {
-            wt->tv_usec = waittime.tv_usec;
+        if (deviceTimeout < *timeout) {
+            // calculate our timeout, and if lesser, then propagate:
+            *timeout = deviceTimeout;
         }
     }
 }
