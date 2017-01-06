@@ -276,6 +276,9 @@ AddInputDevice(ClientPtr client, DeviceProc deviceProc, Bool autoStart)
 
     dev->public.thawProc = NULL; /* NoopDDA */
     dev->public.pushTimeProc = NULL;
+#if MMC_PIPELINE
+    dev->pipeline = NULL;
+#endif
     dev->deviceProc = deviceProc;
     dev->startup = autoStart;
 
