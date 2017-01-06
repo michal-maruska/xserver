@@ -377,7 +377,6 @@ static Bool handlerDeleted;
 /**
  *
  *  \param pTimeout   DIX doesn't want to know how OS represents time
- *  \param pReadMask  nor how it represents the det of descriptors
  *  \param now        time when the select() will be called (lower bound).
  *                    so, (now + pTimeout) is the next wake time..
  */
