@@ -169,7 +169,7 @@ WaitForSomething(Bool are_ready)
     int pollerr;
     static Bool were_ready;
     Bool timer_is_running;
-    CARD32 now = GetTimeInMillis();
+    CARD32 now;
 
     timer_is_running = were_ready;
 
@@ -187,6 +187,7 @@ WaitForSomething(Bool are_ready)
     /* We need a while loop here to handle
        crashed connections and the screen saver timeout */
     while (1) {
+        now = GetTimeInMillis();
         /* deal with any blocked jobs */
         if (workQueue) {
             ProcessWorkQueue();
