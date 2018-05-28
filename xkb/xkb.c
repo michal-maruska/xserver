@@ -2810,7 +2810,8 @@ ProcXkbSetMap(ClientPtr client)
     if (rc != Success)
         return rc;
 
-    master = GetMaster(dev, MASTER_KEYBOARD);
+    // mmc: maybe fails?
+    // master = GetMaster(dev, MASTER_KEYBOARD);
 
     if (stuff->deviceSpec == XkbUseCoreKbd) {
         DeviceIntPtr other;
@@ -2828,6 +2829,8 @@ ProcXkbSetMap(ClientPtr client)
             }
         }
     } else {
+#if 0
+        // mmc:  so this was added.
         DeviceIntPtr other;
 
         for (other = inputInfo.devices; other; other = other->next) {
@@ -2839,6 +2842,7 @@ ProcXkbSetMap(ClientPtr client)
             if (rc != Success)
                 return rc;
         }
+#endif
     }
 
     /* We know now that we will succeed with the SetMap. In theory anyway. */
@@ -2863,6 +2867,7 @@ ProcXkbSetMap(ClientPtr client)
             }
         }
     } else {
+#if 0
         DeviceIntPtr other;
 
         for (other = inputInfo.devices; other; other = other->next) {
@@ -2872,6 +2877,7 @@ ProcXkbSetMap(ClientPtr client)
 
             _XkbSetMap(client, other, stuff, tmp); //ignore rc
         }
+#endif
     }
 
     return Success;
