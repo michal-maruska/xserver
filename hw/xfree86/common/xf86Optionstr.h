@@ -29,6 +29,8 @@
 /*
  * All options are stored using this data type.
  */
+#if 0
+/* mmc: not used? */
 typedef struct _XF86OptionRec {
     GenericListRec list;
     const char *opt_name;
@@ -36,6 +38,7 @@ typedef struct _XF86OptionRec {
     int opt_used;
     const char *opt_comment;
 } XF86OptionRec;
+#endif
 
 typedef struct _InputOption *XF86OptionPtr;
 
