@@ -24,7 +24,7 @@
  * (Either mark the AR events as soft repeat, or avoid shift repeating at all.)
  * todo!
  */
-static void
+static Bool
 core_process_key_event(PluginInstance* plugin,
                        InternalEvent   *event,
                        Bool owner)
@@ -34,15 +34,17 @@ core_process_key_event(PluginInstance* plugin,
 
     ProcessKeyboardEvent(event, keybd);
     if (owner)
-	free(event);
+        free(event);
 
     plugin->frozen = (keybd->deviceGrab.sync.frozen)?TRUE:FALSE;
+    return plugin->frozen?PLUGIN_FROZEN:PLUGIN_NON_FROZEN;
 }
 
 
-static void
+static Bool
 core_accept_time(PluginInstance* plugin, Time time)
 {
+    return PLUGIN_NON_FROZEN;
 }
 
 static void

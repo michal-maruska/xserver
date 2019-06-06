@@ -690,18 +690,21 @@ struct _PluginInstance {
 #define CALLEE_OWNS TRUE
 #define CALLER_OWNS FALSE
 
+#define PLUGIN_NON_FROZEN TRUE
+#define PLUGIN_FROZEN FALSE
 /* class! */
 struct _DevicePluginRec {
    const char* name;
    PluginInstance* (*instantiate)(const DeviceIntPtr dev, DevicePluginRec* plugin_class);
 
-   void (*ProcessEvent) (PluginInstance* plugin, InternalEvent *ev, Bool memory_ownership);
+    // return FALSE if frozen, TRUE if ok.
+   Bool (*ProcessEvent) (PluginInstance* plugin, InternalEvent *ev, Bool memory_ownership);
    /* The plugin is delivered any event through this call. memory_ownership decides if the memory
     * is to be freed by the called function (CALLEE_OWNS)
     * or by the caller (CALLER_OWNS). */
 
    /* push the plugin's clock, as no new event before now occured */
-   void (*ProcessTime) (PluginInstance*, Time now);
+   Bool (*ProcessTime) (PluginInstance*, Time now);
 
 
    void (*NotifyThaw) (PluginInstance*, Time);
