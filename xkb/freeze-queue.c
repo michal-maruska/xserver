@@ -67,7 +67,7 @@ queue_append(queue_data *data, InternalEvent *ev, Bool owner)
         free(event);
 }
 
-static void
+static Bool
 queue_process_key_event(PluginInstance* plugin, InternalEvent *event, Bool owner)
 {
 //    CHECKEVENT(event);
@@ -80,9 +80,10 @@ queue_process_key_event(PluginInstance* plugin, InternalEvent *event, Bool owner
         /* this plugin is not interested in time */
         plugin->wakeup_time = plugin->next->wakeup_time;
     }
+    return PLUGIN_NON_FROZEN;
 }
 
-static void
+static Bool
 queue_accept_time(PluginInstance* plugin, Time time)
 {
     PluginInstance* next = plugin->next;
@@ -100,6 +101,8 @@ queue_accept_time(PluginInstance* plugin, Time time)
         }
     } else
         plugin->wakeup_time = 0;
+
+    return PLUGIN_NON_FROZEN;
 }
 
 
