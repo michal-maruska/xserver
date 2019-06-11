@@ -168,3 +168,8 @@ ddxInputThreadInit(void)
 {
 }
 #endif
+
+void
+UnloadModule(void *_mod)
+{
+}
