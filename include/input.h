@@ -287,6 +287,8 @@ extern _X_EXPORT void set_button_down(DeviceIntPtr pDev, int button, int type);
 extern _X_EXPORT void set_button_up(DeviceIntPtr pDev, int button, int type);
 extern _X_EXPORT int button_is_down(DeviceIntPtr pDev, int button, int type);
 
+extern void init_raw(DeviceIntPtr dev, RawDeviceEvent *event, Time ms, int type, int detail);
+
 extern void InitCoreDevices(void);
 extern void InitXTestDevices(void);
 

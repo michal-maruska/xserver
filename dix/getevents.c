@@ -171,7 +171,7 @@ init_touch_ownership(DeviceIntPtr dev, TouchOwnershipEvent *event, Time ms)
     event->deviceid = dev->id;
 }
 
-static void
+void
 init_raw(DeviceIntPtr dev, RawDeviceEvent *event, Time ms, int type, int detail)
 {
     memset(event, 0, sizeof(RawDeviceEvent));
