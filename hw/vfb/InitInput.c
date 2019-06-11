@@ -144,3 +144,9 @@ CloseInput(void)
 {
     mieqFini();
 }
+
+
+void
+UnloadModule(void *_mod)
+{
+}
