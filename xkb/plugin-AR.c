@@ -557,7 +557,7 @@ ar_thaw(PluginInstance* plugin, Time now)
 
     /* `now' is problematic: what time is that?
      * I think we have to ask the preceding plugin for the (current) time.*/
-    if (now)
+    if (now && (frozen == PLUGIN_NON_FROZEN))
         ar_push_events(plugin, now);
 
     /* now resume normal handling, from the Top! So, set all data, and recurse. */
