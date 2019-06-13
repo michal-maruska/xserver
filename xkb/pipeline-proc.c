@@ -233,6 +233,9 @@ xkb_remove_plugin(PluginInstance* plugin)
         if (plugin_class->ref_count == 0)
         {
 #if 0
+            // this function is invoked from the plugin code, so it will return into it
+            // so we cannot unmap the code now.
+
             ErrorF("%s: we cannot UnloadModule NOW!\n", __FUNCTION__);
             void* module = plugin_class->module;
             UnloadModule(module);
@@ -401,6 +404,10 @@ ProcXkbSetPlugin(ClientPtr client)
                         /* fixme: This might be doable only later! */
                         remove_plugin_class(plugin_class->name);
                         /* unload the module */
+                        ErrorF("%s: now UnloadModule %p!\n", __FUNCTION__, plugin_class->module);
+                        UnloadModule(plugin_class->module);
+                        /* unload the module */
+                        ErrorF("%s: done!!\n", __FUNCTION__);
                     }
                 }
             }
