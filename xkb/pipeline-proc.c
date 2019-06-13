@@ -300,8 +300,8 @@ load_plugin(const char* filename)    /* DeviceIntPtr dev, */
 _X_EXPORT int
 insert_plugin_after(DeviceIntPtr dev, char* name, char* around, Bool before)
 {
-    ErrorF("%s: @ %s: %s around %s\n", __FUNCTION__, dev->name, name, around);
 #if 0                           /* incompatible! */
+    ErrorF("%s: @ %s: %s around %s\n", __FUNCTION__, dev->name, name, around);
     if (dev->pipeline)
     {
         int ret = unload_xkb_rewriting_plugin(dev);
@@ -315,7 +315,10 @@ insert_plugin_after(DeviceIntPtr dev, char* name, char* around, Bool before)
     };
 #endif
 
-    DevicePluginRec* plugin_class = xkb_find_plugin_class(name);
+    DevicePluginRec* plugin_class;
+    ErrorF("%s: @ %s: %s around %s\n", __FUNCTION__, dev->name, name, around);
+
+    plugin_class = xkb_find_plugin_class(name);
     if (! plugin_class)
     {
         int ret;
@@ -337,9 +340,11 @@ insert_plugin_after(DeviceIntPtr dev, char* name, char* around, Bool before)
 
     if (plugin_class)
     {
-        ErrorF("%s: instantiate @ %s: %s %lu\n",
+        PluginInstance* plugin;
+        ErrorF("%s: instantiate @ %s: %s %p\n",
                 __FUNCTION__, dev->name, plugin_class->name, dev);
-        PluginInstance* plugin = plugin_class->instantiate(dev, plugin_class);
+
+        plugin = plugin_class->instantiate(dev, plugin_class);
         plugin->id = ++dev->pipeline_counter;
         if (plugin)
             insert_plugin_around (dev, plugin, around, before);
