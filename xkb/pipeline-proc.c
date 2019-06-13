@@ -396,6 +396,9 @@ ProcXkbSetPlugin(ClientPtr client)
             } else {
                 DevicePluginRec* plugin_class = PluginClass(plugin);
                 PluginClass(plugin)->stop(plugin);
+                // this will involve xkb_remove_plugin and ->terminate()
+                // so now plugin is null
+                plugin = NULL;
 
                 if (plugin_class->module)
                 {
