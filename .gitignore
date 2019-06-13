@@ -1,16 +1,19 @@
 build-main/
 build-udeb
+debian/build
 debian/tmp
 debian/xdmx-tools
 debian/xdmx
 debian/xnest
 debian/xserver-common/
 debian/xserver-xephyr/
+debian/xwayland
 debian/xserver-xfbdev
 debian/xserver-xorg-core
 debian/xserver-xorg-core-dbg
 debian/xserver-xorg-core-udeb
 debian/xserver-xorg-dev
+debian/xserver-xorg-legacy
 debian/xvfb
 stampdir
 #
@@ -95,3 +98,4 @@ core
 doltcompile
 doltlibtool
 xserver.ent
+
