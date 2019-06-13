@@ -252,11 +252,10 @@ load_plugin(const char* filename)    /* DeviceIntPtr dev, */
 {
     /* first, open the  module */
 #ifdef NO_MODULE_EXTS
-    /* vfb */
+    /* vfb  ... now abandoned!*/
     return -1;
 #else
-    const char* dir = DEFAULT_MODULE_PATH; /* "/usr/lib/modules/xkb-plugins/" */
-#if 0
+#if 1
     void *module;
     const XF86ModReqInfo modreq =
         {
@@ -267,19 +266,17 @@ load_plugin(const char* filename)    /* DeviceIntPtr dev, */
             ABI_INPUT_VERSION,
             MOD_CLASS_INPUT
         };
-    int errmaj, errmin;
+    int errmaj;
 
     ErrorF("%s: LoadModule %s\n", __FUNCTION__, filename);
-    module = LoadSubModule(filename, dir, /* fixme: not absolute! */
-                           NULL, /*const char **subdirlist,*/
-                           NULL, NULL, /* const char **patternlist, pointer options, */
-                           &modreq, &errmaj, &errmin);
+    module = LoadModule(filename, NULL, &modreq, &errmaj);
     if (!module)
     {
         /* fixme! */
         return -1;
     }
 #else
+    const char* dir = DEFAULT_MODULE_PATH; /* "/usr/lib/modules/xkb-plugins/" */
     void *module;
     static const char* soext = ".so";
     static const char* dirdiv = "/";
