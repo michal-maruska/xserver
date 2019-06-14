@@ -259,7 +259,7 @@ load_plugin(const char* filename)    /* DeviceIntPtr dev, */
     void *module;
     const XF86ModReqInfo modreq =
         {
-            0,
+            1,
             0,
             0,
             ABI_CLASS_INPUT,
