@@ -92,9 +92,10 @@ typedef struct
 
 
 /* When a processor/plugin needs to generate a new event, use this:
- * the next processor should be accepting (not frozen). */
-
-static void
+ * the next processor/plugin should be accepting (not frozen).
+ *
+ * @return is not-frozen? */
+static Bool
 ar_synthesize_event(PluginInstance* plugin,
                     DeviceIntPtr        keybd,
                     BYTE        type,
@@ -128,7 +129,7 @@ ar_synthesize_event(PluginInstance* plugin,
 //    event.key_repeat = TRUE;
 
     assert(!plugin_frozen(plugin->next));
-    PluginClass(plugin->next)->ProcessEvent(plugin->next, &event, CALLER_OWNS);
+    return PluginClass(plugin->next)->ProcessEvent(plugin->next, &event, CALLER_OWNS);
 }
 
 
@@ -200,13 +201,17 @@ keycode_in_repeats_p(PluginInstance* plugin, KeyCode keycode)
 /* synthesize AR event(s) for the Node.
  *
  * 1 or 2 events (release & press) are emitted, depending on the next processor being
- * frozen by the Release, for 1 node (= 1 keycode) at time NOW  */
-static void
+ * frozen by the Release, for 1 node (= 1 keycode) at time NOW
+ *
+ * @return if the next plugin is FROZEN
+ * */
+static Bool
 ar_process_and_reinsert(PluginInstance* plugin, key_repeat_info* node,
                         Time time)
 {
     DeviceIntPtr keybd = plugin->device;
     KeyCode key = node->key;
+    Bool frozen = PLUGIN_NON_FROZEN;
 
     /* node is the currently first in scheduled_repeats, so it's scheduled_repeats itself. */
     assert(node == first_repeats(plugin)); /* scheduled_repeats */
@@ -222,27 +227,28 @@ ar_process_and_reinsert(PluginInstance* plugin, key_repeat_info* node,
          *  if (_XkbWantsDetectableAutoRepeat(pClient))
          */
         /* The time does not change! So it remains at the head of the list! */
-        ar_synthesize_event(plugin,
+        frozen = ar_synthesize_event(plugin,
                             plugin->device,
                             KeyRelease, key, time);
         node->press = TRUE;
     }
 
-    if (plugin_frozen(plugin->next)) {
+    if (frozen == PLUGIN_FROZEN) {
 
         DEBUG("%s%s: the keyboard is now frozen: we still have to push "
-               "the Press. we'll wait%s\n",
-               repeat_color, __FUNCTION__, color_reset);
-        return;
+              "the Press. we'll wait%s\n",
+              repeat_color, __FUNCTION__, color_reset);
+        return frozen;
     }
 
     WARN("%s%s: PRESS %d  (before %" TIME_FORMAT "(now))%s\n",
            repeat_color, __FUNCTION__, key, time, color_reset);
 
-    ar_synthesize_event(plugin,
-                        plugin->device, KeyPress,key, time);
+    frozen = ar_synthesize_event(plugin,
+                                 plugin->device, KeyPress,key, time);
     node->press = FALSE;
 
+    // recalculate & reinsert the repeating_key:
     {
         XkbSrvInfoPtr xkbi = keybd->key->xkbInfo;
         int delay = xkbi->desc->ctrls->repeat_interval;
@@ -260,6 +266,7 @@ ar_process_and_reinsert(PluginInstance* plugin, key_repeat_info* node,
         node->time += delay;
         insert_into_repeats(plugin, node);
     }
+    return frozen;
 }
 
 
@@ -418,7 +425,7 @@ ar_set_wakeup(PluginInstance *plugin)
 
 
 /* `Finish' a batch/turn of events. This means preparing for sleep & `Wake'! */
-static void
+static Bool
 ar_finish(PluginInstance* plugin)
 {
     /* we copy the same. We can keep an event, but then the ->next is surely frozen,
@@ -436,12 +443,14 @@ ar_finish(PluginInstance* plugin)
     } else {
         ar_set_wakeup(plugin);
     }
+
+    return plugin->frozen?PLUGIN_FROZEN:PLUGIN_NON_FROZEN;
 }
 
-
-static void
+// mmc: maybe this can return if we turn PLUGIN_FROZEN?
+static Bool
 ar_process_key_event(PluginInstance* plugin,
-                     InternalEvent*	event,
+                     InternalEvent*     event,
                      Bool owner)
 {
    PluginInstance* next = plugin->next;
@@ -478,9 +487,9 @@ ar_process_key_event(PluginInstance* plugin,
       }
 
    if (!plugin_frozen(plugin->next)) {
-      /* pass-through */
-      PluginClass(next)->ProcessEvent(next, event, owner);
-      /* note, that at this poin we don't own for sure. */
+       // frozen=
+       PluginClass(next)->ProcessEvent(next, event, owner);
+       /* note, that at this poin we don't own for sure. */
    } else {
        if (((ar_plugin_data*) plugin->data)->frozen_event) {
            ErrorF("%s: dropping event. AR is already holding one for the frozen next\n",
@@ -494,11 +503,11 @@ ar_process_key_event(PluginInstance* plugin,
        if (owner)
            free(event);
    }
-   ar_finish(plugin);
+   return ar_finish(plugin);
 }
 
 
-static void
+static Bool
 ar_accept_time(PluginInstance* plugin, Time time)
 {
     // bug! assert ( ((ar_plugin_data*) plugin->data)->frozen_event != (xEvent) 0);
@@ -516,25 +525,27 @@ ar_accept_time(PluginInstance* plugin, Time time)
         // bug!
         ErrorF("%s should not happen!", __FUNCTION__);
     }
-    ar_finish(plugin);
+
+    return ar_finish(plugin);
 }
 
 
 static void
 ar_thaw(PluginInstance* plugin, Time now)
 {
+    Bool frozen = PLUGIN_NON_FROZEN;
     ar_plugin_data* ar = (ar_plugin_data*)plugin->data;
+
     assert (!plugin_frozen(plugin->next));
 
-    /* todo: get rid of this */
     if (ar->frozen_event) {
         NOTICE("%s we were keeping an event:!\n", __FUNCTION__);
-        ar_push_events(plugin, /* CARD32 month,*/
-                       (ar->frozen_event->any.time));
+        if (PLUGIN_NON_FROZEN == ar_push_events(plugin, /* CARD32 month,*/
+                                         (ar->frozen_event->any.time)))
 
-        if (!plugin_frozen(plugin->next)) {
+        {
             /* send it! */
-            PluginClass(plugin->next)->ProcessEvent(plugin->next,
+            frozen = PluginClass(plugin->next)->ProcessEvent(plugin->next,
                                                     ar->frozen_event,
                                                     FALSE);
             free (ar->frozen_event);
@@ -550,18 +561,21 @@ ar_thaw(PluginInstance* plugin, Time now)
         ar_push_events(plugin, now);
 
     /* now resume normal handling, from the Top! So, set all data, and recurse. */
-    ar_finish(plugin);
+    frozen = ar_finish(plugin);
 
-    if (!plugin_frozen(plugin) && PluginClass(plugin->prev)->NotifyThaw) {
+    if (frozen == PLUGIN_NON_FROZEN && PluginClass(plugin->prev)->NotifyThaw) {
         /* if !plugin->prev->NotifyThaw ... would be strange. */
         NOTICE("%s -- sending thaw Notify upwards!\n", __FUNCTION__);
         /* thaw the previous! */
+        // frozen =
         PluginClass(plugin->prev)->NotifyThaw(plugin->prev, now);
         /* I could move now to the time of our event. */
     } else {
          ErrorF("%s -- NOT sending thaw Notify upwards %s!\n", __FUNCTION__,
                 plugin_frozen(plugin)?"next is frozen":"prev has not NotifyThaw");
     }
+
+    // return frozen
 }
 
 
