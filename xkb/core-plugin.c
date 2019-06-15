@@ -44,7 +44,9 @@ core_process_key_event(PluginInstance* plugin,
 static Bool
 core_accept_time(PluginInstance* plugin, Time time)
 {
-    return PLUGIN_NON_FROZEN;
+    assert(plugin->frozen == PLUGIN_FROZEN);
+    // ErrorF("bug!\n");
+    return plugin->frozen?PLUGIN_FROZEN:PLUGIN_NON_FROZEN;
 }
 
 static void
