@@ -57,6 +57,7 @@ xkb_init_pipeline(DeviceIntPtr device)
 {
     PluginInstance *queue_plugin;
     PluginInstance *ar_plugin;
+    DevicePluginRec* plugin_class;
 
     assert(!device->pipeline);
     /* let's build this pipeline:
@@ -74,6 +75,20 @@ xkb_init_pipeline(DeviceIntPtr device)
     insert_plugin_around(device,
                          queue_plugin,
                          "core", INSERT_BEFORE);
+
+    // if fork is known, add it.
+    plugin_class = xkb_find_plugin_class("fork");
+    if (plugin_class)
+    {
+        PluginInstance* plugin = plugin_class->instantiate(device, plugin_class);
+        plugin->id = ++device->pipeline_counter;
+        if (plugin)
+            insert_plugin_around(device, plugin,
+                                 "core", INSERT_BEFORE);
+        else
+            return; // BadAlloc;
+        // and based on options populate the forking table?
+    }
 
     ar_plugin = ar_plugin_class.instantiate(device, &ar_plugin_class);
     ar_plugin->id = ++(device->pipeline_counter);
