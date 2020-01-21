@@ -102,11 +102,13 @@ static Bool mieqInit_device(EventQueuePtr eq);
 /* return FALSE on failure. Otherwise allocate in the arrays for @dev. */
 Bool mieq_init_device_queue(DeviceIntPtr dev)
 {
+    input_lock();
     if ((devices = realloc(devices, (mi_devices + 1) * sizeof(DeviceIntPtr))) == NULL)
-        return FALSE;
+        goto error;
     if ((queues = realloc(queues, (mi_devices + 1) * sizeof(EventQueuePtr))) == NULL)
         /* no worry about devices; */
-        return FALSE;
+        goto error;
+
     devices[mi_devices] = dev;  /* not good. */
     queues[mi_devices] = malloc(sizeof(EventQueueRec));
     if (!queues[mi_devices])
@@ -114,7 +116,12 @@ Bool mieq_init_device_queue(DeviceIntPtr dev)
     mieqInit_device(queues[mi_devices]);
     mi_devices++;
     ErrorF("%s: %d\n", __func__, mi_devices);
+
+    input_unlock();
     return TRUE;
+ error:
+    input_unlock();
+    return FALSE;
 }
 
 static size_t
@@ -261,7 +268,9 @@ find_queue(DeviceIntPtr pDev)
 
 void mieq_close_device_queue(DeviceIntPtr dev)
 {
-    int i= find_queue(dev);
+    int i;
+    input_lock();
+    i = find_queue(dev);
     if (i== -1) {
         ErrorF("%s: the being-closed device was not registered\n", __func__);
         return;
@@ -277,7 +286,7 @@ void mieq_close_device_queue(DeviceIntPtr dev)
         devices[i] = devices[mi_devices];
         queues[i] = queues[mi_devices];
     }
-
+    input_unlock();
     // shrink the 2 arrays possibly -- todo!
 }
 
