@@ -170,9 +170,9 @@ _XkbCheckRequestBounds(ClientPtr client, void *stuff, void *from, void *to) {
 int
 ProcXkbUseExtension(ClientPtr client)
 {
-    REQUEST(xkbUseExtensionReq);
     xkbUseExtensionReply rep;
     int supported;
+    REQUEST(xkbUseExtensionReq);
 
     REQUEST_SIZE_MATCH(xkbUseExtensionReq);
     if (stuff->wantedMajor != SERVER_XKB_MAJOR_VERSION) {
@@ -491,10 +491,10 @@ _XkbBell(ClientPtr client, DeviceIntPtr dev, WindowPtr pWin,
 int
 ProcXkbBell(ClientPtr client)
 {
-    REQUEST(xkbBellReq);
     DeviceIntPtr dev;
     WindowPtr pWin;
     int rc;
+    REQUEST(xkbBellReq);
 
     REQUEST_SIZE_MATCH(xkbBellReq);
 
@@ -579,10 +579,10 @@ ProcXkbBell(ClientPtr client)
 int
 ProcXkbGetState(ClientPtr client)
 {
-    REQUEST(xkbGetStateReq);
     DeviceIntPtr dev;
     xkbGetStateReply rep;
     XkbStateRec *xkb;
+    REQUEST(xkbGetStateReq);
 
     REQUEST_SIZE_MATCH(xkbGetStateReq);
 
