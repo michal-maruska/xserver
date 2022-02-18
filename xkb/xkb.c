@@ -2143,7 +2143,7 @@ SetKeySyms(ClientPtr client,
         if (wire->nSyms > 0) {
             newSyms = XkbResizeKeySyms(xkb, i + req->firstKeySym, wire->nSyms);
             for (s = 0; s < wire->nSyms; s++) {
-                ErrorF ("overwriting %lu, %lu, total %d \n", newSyms[s], pSyms[s],
+                ErrorF ("overwriting %u, %u, total %d \n", newSyms[s], pSyms[s],
                         XkbKeyNumSyms(xkb,i+req->firstKeySym));
                 newSyms[s] = pSyms[s];
             }
