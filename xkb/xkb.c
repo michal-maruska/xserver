@@ -1632,10 +1632,10 @@ CheckKeyTypes(ClientPtr client,
         *nMapsRtrn = xkb->map->num_types;
         for (i = 0; i < xkb->map->num_types; i++) {
             mapWidthRtrn[i] = xkb->map->types[i].num_levels;
-	    /*
-	     * mmc:  mapWidthRtrn is allocated for max keycodes.  Is the same
-	     * limit valid for # of levels of Types???
-	     */
+            /*
+             * mmc:  mapWidthRtrn is allocated for max keycodes.  Is the same
+             * limit valid for # of levels of Types???
+             */
         }
         return 1;
     }
