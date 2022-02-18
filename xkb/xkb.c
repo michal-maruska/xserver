@@ -2741,7 +2741,7 @@ ProcXkbSetMap(ClientPtr client)
         return rc;
 
     // mmc: maybe fails?
-    // master = GetMaster(dev, MASTER_KEYBOARD);
+    master = GetMaster(dev, MASTER_KEYBOARD);
 
     if (stuff->deviceSpec == XkbUseCoreKbd) {
         DeviceIntPtr other;
@@ -2759,7 +2759,7 @@ ProcXkbSetMap(ClientPtr client)
             }
         }
     } else {
-#if 0
+#if 1
         // mmc:  so this was added.
         DeviceIntPtr other;
 
