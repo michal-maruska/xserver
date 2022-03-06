@@ -2560,17 +2560,28 @@ _XkbSetMapChecks(ClientPtr client, DeviceIntPtr dev, xkbSetMapReq * req,
     for (i = xkb->min_key_code; i < xkb->max_key_code; i++, map++) {
         register int g, ng, w;
 
+        // Here we check the current map versus the NEW number of types!
+        // but where is `i' used? ... note: map++
+
         ng = XkbNumGroups(map->group_info);
         for (w = g = 0; g < ng; g++) {
+
             if (map->kt_index[g] >= (unsigned) nTypes) {
+                ErrorF("[xkb] currently keycode %d in group %d has more types %d than when will be newly defined %d\n", i, g, map->kt_index[g], nTypes);
+#if 0
                 client->errorValue = _XkbErrCode4(0x13, i, g, map->kt_index[g]);
                 return BadValue;
+#endif
             }
+            // keep the max:
+            // w = max(w, mapWidths[map->kt_index[g]])
+            // w max= mapWidths[map->kt_index[g]]
             if (mapWidths[map->kt_index[g]] > w)
                 w = mapWidths[map->kt_index[g]];
         }
         symsPerKey[i] = w * ng;
     }
+
 
     if ((req->present & XkbKeySymsMask) &&
         (!CheckKeySyms(client, xkb, req, nTypes, mapWidths, symsPerKey,
