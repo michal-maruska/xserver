@@ -11,7 +11,7 @@ Build-Depends:
  flex,
  xutils-dev (>= 1:7.6+4),
  xfonts-utils (>= 1:7.5+1),
- x11proto-dev (>= 2021.5),
+ x11proto-dev (>= 2024.1-1-maruska),
  xtrans-dev (>= 1.3.5),
  libxau-dev (>= 1:1.0.5-2),
  libxcvt-dev,
