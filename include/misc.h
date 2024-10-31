@@ -160,7 +160,11 @@ typedef struct _xReq *xReqPtr;
  * #include'ing it later.
  */
 
+#define _GLIBCXX_INCLUDE_NEXT_C_HEADERS 1
 #include <math.h>
+#undef _GLIBCXX_INCLUDE_NEXT_C_HEADERS
+
+
 #undef MAXSHORT
 #define MAXSHORT SHRT_MAX
 #undef MINSHORT
