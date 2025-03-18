@@ -274,6 +274,8 @@ CopyKeyClass(DeviceIntPtr device, DeviceIntPtr master)
 
     mk->sourceid = device->id;
 
+    return;			/* mmc: for now I configure the map only
+				   on the master one.*/
     if (!XkbDeviceApplyKeymap(master, device->key->xkbInfo->desc))
         FatalError("Couldn't pivot keymap from device to core!\n");
 }
@@ -1812,6 +1814,29 @@ ProcessGestureEvent(InternalEvent *ev, DeviceIntPtr dev)
         (*dev->deviceGrab.DeactivateGrab) (dev);
 }
 
+static const char* event_names[] = {
+    "KeyPress",
+    "KeyRelease",
+    "ButtonPress",
+    "ButtonRelease",
+    "Motion",
+    "Enter",
+    "Leave",
+    "FocusIn",
+    "FocusOut",
+    "ProximityIn",
+    "ProximityOut",
+    "DeviceChanged",
+    "Hierarchy",
+    "DGAEvent",
+    "RawKeyPress",
+    "RawKeyRelease",
+    "RawButtonPress",
+    "RawButtonRelease",
+    "RawMotion",
+    "XQuartz"
+};
+
 /**
  * Process DeviceEvents and DeviceChangedEvents.
  */
@@ -1826,6 +1851,20 @@ ProcessDeviceEvent(InternalEvent *ev, DeviceIntPtr device)
     int corestate;
     DeviceIntPtr mouse = NULL, kbd = NULL;
     DeviceEvent *event = &ev->device_event;
+
+#if 0
+    ErrorF("%s: %s %s\n", __FUNCTION__, device->name, event_names[ev->any.type - 2 ]);
+#endif
+#if 0
+    if (ev->any.type == ET_RawKeyPress ||
+        ev->any.type == ET_RawKeyRelease ||
+        ev->any.type == ET_RawButtonPress ||
+        ev->any.type == ET_RawButtonRelease ||
+        ev->any.type == ET_RawMotion) {
+        ProcessRawEvent(&ev->raw_event, device);
+        return;
+    }
+#endif
 
     if (IsPointerDevice(device)) {
         kbd = GetMaster(device, KEYBOARD_OR_FLOAT);
