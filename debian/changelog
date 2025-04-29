@@ -1,3 +1,9 @@
+xorg-server (2:21.1.16-1-maruska2) unstable; urgency=medium
+
+  * rewrite keycode_in_repeats_p without the useless indirection
+
+ -- Michal Maruska <mmaruska@gmail.com>  Tue, 29 Apr 2025 10:55:47 +0200
+
 xorg-server (2:21.1.16-1-maruska) unstable; urgency=medium
 
   * Configure: Enable use the pipeline optionally.
