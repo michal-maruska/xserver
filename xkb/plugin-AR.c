@@ -188,13 +188,14 @@ inline static int
 keycode_in_repeats_p(PluginInstance* plugin, KeyCode keycode)
 {
     /* again, insert into an ordered linked list: */
-    key_repeat_info **prev;
+    key_repeat_info *info;
 
-    for (prev = &(((ar_plugin_data*) plugin->data)->repeats);
-         *prev;
-         prev = &(*prev)->next)
-        if ((*prev)->key == keycode)
+    for (info = first_repeats(plugin);
+         info; // indirection!
+         info = info->next) {
+        if (info->key == keycode)
             return 1;
+    }
     return 0;
 }
 
