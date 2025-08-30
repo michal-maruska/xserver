@@ -1,0 +1,137 @@
+* how to build:
+/etc/apt/preferences.d/pinned.pref
+
+fixme!   I pin:
+Package: x11proto-dev
+Pin: origin "maruska"
+Pin-Priority: 999
+
+Package: x11proto-dev
+Pin: version 2023.2-1-maruska
+Pin-Priority: 999
+
+* so do I build it on my machine directly?
+
+
+
+
+* investigation:
+
+objdump  -t --syms  debian/build/main/xkb/.libs/xkb.o
+
+l ... static
+g ... why hidden?
+F .. function
+
+
+
+
+* gcc color output during dpkg?
+
+
+* dpkg to reuse?
+
+
+-fvisibility=hidden + visibility attribute?
+
+./hw/xfree86/sdksyms.sh has a list of official/sdk  header files
+and generates:
+./debian/build/main/hw/xfree86/sdksyms.c
+
+so, for example ~/git/xorg-debian/server/include/xkbfile.h:
+   extern _X_EXPORT const char *XkbActionTypeText(unsigned /* type */ ,
+
+133f000c
+_XkbErrCode4(0x13, i, g, map->kt_index[g]);
+13
+keycode 3f
+group 00
+index ???
+
+
+* for ubuntu:
+** get rid of patches?  Quilt is handled by source-packaging when unarchiving them.
+-- have them in git?
+
+git-buildpackage does NOT apply them, neither  d/rules.
+
+
+* clone on top of:
+ubuntu/base
+
+git-rebase-poset -s debian-unstable   -t ubuntu/base ubuntu-mmc-all
+
+and have a branch with the patches:
+
+** script to import that:
+scp -r work:xorg-server-1.20.8/debian/patches   patches-ubuntu
+
+git-segment -c ubuntu-patches ubuntu/base
+
+QUILT_PATCHES=patches-ubuntu
+while
+QUILT_PATCHES=patches-ubuntu quilt push
+QUILT_PATCHES=patches-ubuntu quilt header
+QUILT_PATCHES=patches-ubuntu quilt header|sed --silent -E 's/Subject: (.*)$/\1/p'
+
+QUILT_PATCHES=patches-ubuntu msg=$(quilt header|sed -n -E 's/Subject: (.*)$/\1/p'); echo $msg; git commit -a -m "randr: auto-bind of GPU is a config change"
+
+** bump UP ABI_XINPUT_VERSION
+
+and so I have to rebuild the input drivers!
+
+
+
+** mi/mieq.c:772:5: error: implicit declaration of function mieqProcessInputEventsTime; did you mean
+‘mieqProcessInputEvents’? [-Werror=implicit-function-declaration]
+  772 |     mieqProcessInputEventsTime(0);
+
+** xkb/xkb.c:2793:5: error: ‘master�
+
+** hw/xfree86/common/xf86Events.c:161:9: error: implicit declaration of function ‘mieqProcessInputEventsTime�
+
+
+* how to `resume' the build?
+cd debian/build/main/
+make
+
+
+/usr/bin/ld: ../../xkb/.libs/libxkb.a(pipeline-proc.o): in function `load_plugin':
+./debian/build/main/xkb/../../../../xkb/pipeline-proc.c:272: undefined reference to `LoadModule'
+
+~/git/xorg-debian/server/hw/xfree86/loader/loadmod.c
+ModuleDescPtr
+LoadModule(const char *module, void *options, const XF86ModReqInfo *modreq,
+           int *errmaj)
+
+
+libtool: link: gcc -DHAVE_DMX_CONFIG_H -DHAVE_DIX_CONFIG_H -Wall -Wpointer-arith -Wmissing-declarations -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs -Wbad-function-cast -Wold-style-definition -Wdeclaration-after-statement -Wunused -Wuninitialized -Wshadow -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wlogical-op -Werror=implicit -Werror=nonnull -Werror=init-self -Werror=main -Werror=missing-braces -Werror=sequence-point -Werror=return-type -Werror=trigraphs -Werror=array-bounds -Werror=write-strings -Werror=address -Werror=int-to-pointer-cast -Werror=pointer-to-int-cast -fno-strict-aliasing -fno-strict-aliasing -D_DEFAULT_SOURCE -D_BSD_SOURCE -DHAS_FCHOWN -DHAS_STICKY_DIR_BIT -I/usr/include/libdrm -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16 -I/usr/include/X11/dri -I../../../../../include -I../../include -I../../../../../Xext -I../../../../../composite -I../../../../../damageext -I../../../../../xfixes -I../../../../../Xi -I../../../../../mi -I../../../../../miext/sync -I../../../../../miext/shadow -I../../../../../miext/damage -I../../../../../render -I../../../../../randr -I../../../../../fb -I../../../../../dbe -I../../../../../present -fvisibility=hidden -I../../../../../hw/xfree86/dixmods/extmod -g -O2 -fdebug-prefix-map=/srv/build/package=. -fstack-protector-strong -Wformat -Werror=format-security -pthread -Wl,-Bsymbolic-functions -Wl,-z -Wl,relro -Wl,-Bsymbolic
+ -o Xdmx
+
+
+ dmx.o dmxcb.o dmxcmap.o dmxcursor.o dmxdpms.o dmxextension.o dmxfont.o dmxgc.o dmxgcops.o dmxinit.o dmxinput.o dmxlog.o dmxpict.o dmxpixmap.o dmxprop.o dmxscrinit.o dmxstat.o dmxsync.o dmxvisual.o dmxwindow.o miinitext.o panoramiX.o dmx_glxvisuals.o -Wl,--export-dynamic  glxProxy/libglxproxy.a ../../fb/.libs/libfb.a ../../mi/.libs/libmi.a ../../Xext/.libs/libXext.a -lselinux ../../record/.libs/librecord.a ../../Xi/.libs/libXi.a ../../xkb/.libs/libxkb.a ../../xkb/.libs/libxkbstubs.a ../../dri3/.libs/libdri3.a ../../present/.libs/libpresent.a ../../miext/sync/.libs/libsync.a ../../miext/shadow/.libs/libshadow.a ../../miext/damage/.libs/libdamage.a ../../composite/.libs/libcomposite.a ../../damageext/.libs/libdamageext.a ../../dix/.libs/libmain.a ../../dix/.libs/libdix.a ../../randr/.libs/librandr.a ../../render/.libs/librender.a ../../os/.libs/libos.a -lgcrypt -ldl -lunwind ../../xfixes/.libs/libxfixes.a input/libdmxinput.a config/libdmxconfig.a -lXmuu -lXext -lXrender -lX11 -lXfixes -lXi -lpixman-1 -lXfont2 -lXau -lsystemd -lxshmfence -lXdmcp -laudit -lm -lbsd -pthread
+
+
+gcc -DHAVE_DMX_CONFIG_H -DHAVE_DIX_CONFIG_H -Wall -Wpointer-arith -Wmissing-declarations -Wformat=2 -Wstrict-prototypes
+-Wmissing-prototypes -Wnested-externs -Wbad-function-cast -Wold-style-definition -Wdeclaration-after-statement -Wunused
+-Wuninitialized -Wshadow -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wlogical-op -Werror=implicit
+-Werror=nonnull -Werror=init-self -Werror=main -Werror=missing-braces -Werror=sequence-point -Werror=return-type
+-Werror=trigraphs -Werror=array-bounds -Werror=write-strings -Werror=address -Werror=int-to-pointer-cast
+-Werror=pointer-to-int-cast -fno-strict-aliasing -fno-strict-aliasing -D_DEFAULT_SOURCE -D_BSD_SOURCE -DHAS_FCHOWN
+-DHAS_STICKY_DIR_BIT -I/usr/include/libdrm -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16
+-I/usr/include/X11/dri -I../../../../../include -I../../include -I../../../../../Xext -I../../../../../composite
+-I../../../../../damageext -I../../../../../xfixes -I../../../../../Xi -I../../../../../mi -I../../../../../miext/sync
+-I../../../../../miext/shadow -I../../../../../miext/damage -I../../../../../render -I../../../../../randr -I../../../../../fb
+-I../../../../../dbe -I../../../../../present -fvisibility=hidden -I../../../../../hw/xfree86/dixmods/extmod -g -O2
+-fdebug-prefix-map=/srv/build/package=. -fstack-protector-strong -Wformat -Werror=format-security -pthread
+-Wl,-Bsymbolic-functions -Wl,-z -Wl,relro -Wl,-Bsymbolic
+
+
+-o Xdmx dmx.o dmxcb.o dmxcmap.o dmxcursor.o dmxdpms.o dmxextension.o dmxfont.o dmxgc.o dmxgcops.o dmxinit.o dmxinput.o dmxlog.o
+ dmxpict.o dmxpixmap.o dmxprop.o dmxscrinit.o dmxstat.o dmxsync.o dmxvisual.o dmxwindow.o miinitext.o panoramiX.o
+ dmx_glxvisuals.o -Wl,--export-dynamic  glxProxy/libglxproxy.a ../../fb/.libs/libfb.a ../../mi/.libs/libmi.a
+ ../../Xext/.libs/libXext.a -lselinux ../../record/.libs/librecord.a ../../Xi/.libs/libXi.a
+
+../../xkb/.libs/libxkb.a
+../../xkb/.libs/libxkbstubs.a
+../../dri3/.libs/libdri3.a ../../present/.libs/libpresent.a ../../miext/sync/.libs/libsync.a ../../miext/shadow/.libs/libshadow.a ../../miext/damage/.libs/libdamage.a ../../composite/.libs/libcomposite.a ../../damageext/.libs/libdamageext.a ../../dix/.libs/libmain.a ../../dix/.libs/libdix.a ../../randr/.libs/librandr.a ../../render/.libs/librender.a ../../os/.libs/libos.a -lgcrypt -ldl -lunwind ../../xfixes/.libs/libxfixes.a input/libdmxinput.a config/libdmxconfig.a -lXmuu -lXext -lXrender -lX11 -lXfixes -lXi -lpixman-1 -lXfont2 -lXau -lsystemd -lxshmfence -lXdmcp -laudit -lm -lbsd -pthread
