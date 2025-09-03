@@ -1902,7 +1902,12 @@ ProcessDeviceEvent(InternalEvent *ev, DeviceIntPtr device)
         GetSpritePosition(device, &rootX, &rootY);
         event->root_x = rootX;
         event->root_y = rootY;
-        NoticeEventTime((InternalEvent *) event, device);
+        if (IsMaster(device)) {
+#if mmc_debug
+            ErrorF("%s:\n", __FUNCTION__);
+#endif
+            NoticeEventTime((InternalEvent *) event, device);
+        }
         event->corestate = corestate;
         key = event->detail.key;
         break;
