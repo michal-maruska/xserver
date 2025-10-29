@@ -1,6 +1,9 @@
 xorg-server (2:21.1.20-1) UNRELEASED; urgency=medium
 
-  * New upstream release.
+  * New upstream release. (Closes: #1119267)
+  * CVE-2025-62229: Use-after-free in XPresentNotify structures creation
+  * CVE-2025-62230: Use-after-free in Xkb client resource removal
+  * CVE-2025-62231: Value overflow in Xkb extension XkbSetCompatMap
 
  -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 29 Oct 2025 11:08:22 +0100
 
