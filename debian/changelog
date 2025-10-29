@@ -1,3 +1,9 @@
+xorg-server (2:21.1.20-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 29 Oct 2025 11:08:22 +0100
+
 xorg-server (2:21.1.18-2) unstable; urgency=medium
 
   [ NoisyCoil ]
