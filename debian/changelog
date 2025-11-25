@@ -1,6 +1,7 @@
 xorg-server (2:21.1.21-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * control: Migrate to libselinux-dev.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 25 Nov 2025 14:58:31 +0200
 
