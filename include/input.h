@@ -196,6 +196,11 @@ typedef struct _DeviceRec {
     ProcessInputProc processInputProc;  /* current */
     ProcessInputProc realInputProc;     /* deliver */
     ProcessInputProc enqueueInputProc;  /* enqueue */
+    void (*thawProc)(DeviceIntPtr);
+    /* The time should be an upper bound of time for which all
+     * events were read. E.g. time obtained before select(2) on Linux which
+     * guarantees to signal *ALL* ready fds. */
+    void (*pushTimeProc)(DeviceIntPtr, Time time);
     Bool on;                    /* used by DDX to keep state */
 } DeviceRec, *DevicePtr;
 
@@ -281,6 +286,8 @@ extern _X_EXPORT int key_is_down(DeviceIntPtr pDev, int key_code, int type);
 extern _X_EXPORT void set_button_down(DeviceIntPtr pDev, int button, int type);
 extern _X_EXPORT void set_button_up(DeviceIntPtr pDev, int button, int type);
 extern _X_EXPORT int button_is_down(DeviceIntPtr pDev, int button, int type);
+
+extern void init_raw(DeviceIntPtr dev, RawDeviceEvent *event, Time ms, int type, int detail);
 
 extern void InitCoreDevices(void);
 extern void InitXTestDevices(void);
@@ -446,6 +453,9 @@ extern void ProcessPointerEvent(InternalEvent * /* ev */ ,
 extern void ProcessKeyboardEvent(InternalEvent * /*ev */ ,
                                  DeviceIntPtr /*keybd */ );
 
+/* After the last event read, or possibly "no event" available from the Select()
+   call, this time, NOW, can push us futher in the input processing-interpreting */
+extern _X_EXPORT void ProcessInputEventsPush(Time now);
 extern _X_EXPORT void ProcessInputEvents(void);
 
 extern _X_EXPORT void InitInput(int /*argc */ ,
@@ -481,9 +491,21 @@ extern _X_EXPORT int GetKeyboardEvents(InternalEvent *events,
                                        int type,
                                        int key_code);
 
+extern _X_EXPORT int GetKeyboardEventsTime(InternalEvent *events,
+                                       DeviceIntPtr pDev,
+                                       int type,
+                                       int key_code,
+                                       Time time);
+
+
 extern _X_EXPORT void QueueKeyboardEvents(DeviceIntPtr pDev,
                                           int type,
                                           int key_code);
+
+extern _X_EXPORT void QueueKeyboardEventsTime(DeviceIntPtr pDev,
+                                          int type,
+                                          int key_code,
+                                          Time time);
 
 extern int GetTouchEvents(InternalEvent *events,
                           DeviceIntPtr pDev,
