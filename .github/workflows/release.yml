@@ -1,0 +1,17 @@
+name: Publish Debian Package
+
+on:
+  push:
+    tags:
+      - 'sid/*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write # Optional, but good if you use GHCR
+
+jobs:
+  publish:
+    uses: michal-maruska/workflows/.github/workflows/build-and-publish-deb.yml@main
+    with:
+      apt_repo: michal-maruska/apt-repo
