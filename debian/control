@@ -6,6 +6,7 @@ Build-Depends:
  debhelper-compat (= 12),
  po-debconf,
  quilt,
+ fakeroot,
  pkgconf,
  bison,
  flex,
