@@ -13,5 +13,4 @@ permissions:
 jobs:
   publish:
     uses: michal-maruska/workflows/.github/workflows/build-and-publish-deb.yml@main
-    with:
-      apt_repo: michal-maruska/apt-repo
+    secrets: inherit
