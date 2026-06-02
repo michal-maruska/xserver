@@ -191,6 +191,9 @@
 /* System has wscons console */
 #undef WSCONS_SUPPORT
 
+/* mmc's alternative routing of keyboard events */
+#undef MMC_PIPELINE
+
 /* Loadable XFree86 server awesomeness */
 #define XFree86LOADER
 

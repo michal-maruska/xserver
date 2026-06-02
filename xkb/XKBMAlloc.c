@@ -267,6 +267,7 @@ XkbCopyKeyTypes(XkbKeyTypePtr from, XkbKeyTypePtr into, int num_types)
 Status
 XkbResizeKeyType(XkbDescPtr xkb,
                  int type_ndx,
+                 /* mmc: number of mappings: modifier-set -> level  */
                  int map_count, Bool want_preserve, int new_num_lvls)
 {
     XkbKeyTypePtr type;
@@ -502,6 +503,7 @@ XkbResizeKeySyms(XkbDescPtr xkb, int key, int needed)
         return NULL;
     newSyms[0] = NoSymbol;
     nSyms = 1;
+    /* mmc: compactify. */
     for (i = xkb->min_key_code; i <= (int) xkb->max_key_code; i++) {
         int nCopy;
 
@@ -522,6 +524,24 @@ XkbResizeKeySyms(XkbDescPtr xkb, int key, int needed)
     free(xkb->map->syms);
     xkb->map->syms = newSyms;
     xkb->map->num_syms = nSyms;
+
+    /* mmc: we grow the table when needed, and never shrink it.
+       So i decided to test & shrink here: */
+    if (xkb->map->size_syms > 2 * xkb->map->num_syms + 64)
+       {
+	 /* mmc: oh this is in the Server! */
+#ifdef XKB_IN_SERVER
+#ifdef DEBUG
+          ErrorF("%s: reduction! %d ->%d\n", __FUNCTION__, xkb->map->size_syms,
+		 2 * xkb->map->num_syms + 64);
+#endif
+#endif
+          xkb->map->size_syms = 2 * xkb->map->num_syms + 64;
+          /* xkb->map->num_syms remains! */
+          /* todo: if this fails....!!  hopefully never, we just shrink. */
+          xkb->map->syms = realloc(xkb->map->syms, xkb->map->size_syms * sizeof(KeySym));
+       }
+
     return &xkb->map->syms[xkb->map->key_sym_map[key].offset];
 }
 
@@ -624,7 +644,7 @@ XkbChangeKeycodeRange(XkbDescPtr xkb,
                                                         XkbVirtualModMapMask,
                                                         minKC,
                                                         &changes->map.
-                                                        first_modmap_key,
+                                                        first_vmodmap_key,
                                                         &changes->map.
                                                         num_vmodmap_keys);
                 }
@@ -648,7 +668,7 @@ XkbChangeKeycodeRange(XkbDescPtr xkb,
         tmp = MAP_LENGTH - xkb->max_key_code;
         if (xkb->map) {
             if (xkb->map->key_sym_map) {
-                memset((char *) &xkb->map->key_sym_map[xkb->max_key_code], 0,
+                memset((char *) &xkb->map->key_sym_map[xkb->max_key_code + 1], 0,
                        tmp * sizeof(XkbSymMapRec));
                 if (changes) {
                     changes->map.changed = _ExtendRange(changes->map.changed,
@@ -660,7 +680,7 @@ XkbChangeKeycodeRange(XkbDescPtr xkb,
                 }
             }
             if (xkb->map->modmap) {
-                memset((char *) &xkb->map->modmap[xkb->max_key_code], 0, tmp);
+                memset((char *) &xkb->map->modmap[xkb->max_key_code + 1], 0, tmp);
                 if (changes) {
                     changes->map.changed = _ExtendRange(changes->map.changed,
                                                         XkbModifierMapMask,
@@ -674,7 +694,7 @@ XkbChangeKeycodeRange(XkbDescPtr xkb,
         }
         if (xkb->server) {
             if (xkb->server->behaviors) {
-                memset((char *) &xkb->server->behaviors[xkb->max_key_code], 0,
+                memset((char *) &xkb->server->behaviors[xkb->max_key_code + 1], 0,
                        tmp * sizeof(XkbBehavior));
                 if (changes) {
                     changes->map.changed = _ExtendRange(changes->map.changed,
@@ -687,7 +707,7 @@ XkbChangeKeycodeRange(XkbDescPtr xkb,
                 }
             }
             if (xkb->server->key_acts) {
-                memset((char *) &xkb->server->key_acts[xkb->max_key_code], 0,
+                memset((char *) &xkb->server->key_acts[xkb->max_key_code + 1], 0,
                        tmp * sizeof(unsigned short));
                 if (changes) {
                     changes->map.changed = _ExtendRange(changes->map.changed,
@@ -700,21 +720,42 @@ XkbChangeKeycodeRange(XkbDescPtr xkb,
                 }
             }
             if (xkb->server->vmodmap) {
-                memset((char *) &xkb->server->vmodmap[xkb->max_key_code], 0,
+                memset((char *) &xkb->server->vmodmap[xkb->max_key_code + 1], 0,
                        tmp * sizeof(unsigned short));
                 if (changes) {
                     changes->map.changed = _ExtendRange(changes->map.changed,
                                                         XkbVirtualModMapMask,
                                                         maxKC,
                                                         &changes->map.
-                                                        first_modmap_key,
+                                                        first_vmodmap_key,
                                                         &changes->map.
                                                         num_vmodmap_keys);
                 }
             }
+            /* resize server->explicit too. */
+            if (xkb->server->explicit) {
+                unsigned char *prev_explicit = xkb->server->explicit;
+                xkb->server->explicit= realloc(xkb->server->explicit,
+                                                (maxKC+1)*sizeof(unsigned char));
+                if (!xkb->server->explicit) {
+                    free(prev_explicit);
+                    return BadAlloc;
+                }
+                bzero((char *)&xkb->server->explicit[xkb->max_key_code + 1],
+                      tmp*sizeof(unsigned char));
+                if (changes) {
+                    changes->map.changed=
+                        _ExtendRange(changes->map.changed,
+                                     XkbExplicitComponentsMask,maxKC,
+                                     /* ???? */
+                                     &changes->map.first_key_explicit,
+                                     &changes->map.num_key_explicit);
+                }
+            }
+
         }
         if ((xkb->names) && (xkb->names->keys)) {
-            memset((char *) &xkb->names->keys[xkb->max_key_code], 0,
+            memset((char *) &xkb->names->keys[xkb->max_key_code + 1], 0,
                    tmp * sizeof(XkbKeyNameRec));
             if (changes) {
                 changes->names.changed = _ExtendRange(changes->names.changed,
@@ -777,6 +818,23 @@ XkbResizeKeyActions(XkbDescPtr xkb, int key, int needed)
     free(xkb->server->acts);
     xkb->server->acts = newActs;
     xkb->server->num_acts = nActs;
+    /* mmc: again (see above for keysyms), we grow the table when needed,
+       and never shrink it.
+       So i decided to test & shrink here: */
+    if (xkb->server->size_acts > 2 * xkb->server->num_acts + 64) {
+#ifdef XKB_IN_SERVER
+#ifdef DEBUG
+        ErrorF("%s: reduction! %d ->%d\n", __FUNCTION__, xkb->server->size_acts,
+               2 * xkb->server->num_acts + 64);
+#endif
+#endif
+        xkb->server->size_acts = 2 * xkb->server->num_acts + 64;
+        /* xkb->server->num_acts remains! */
+        /* fixme: if this fails....! */
+        xkb->server->acts = realloc(xkb->server->acts,
+                                    xkb->server->size_acts * sizeof(XkbAction));
+    }
+
     return &xkb->server->acts[xkb->server->key_acts[key]];
 }
 

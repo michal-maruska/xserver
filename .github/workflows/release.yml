@@ -1,0 +1,17 @@
+name: Publish Debian Package
+
+on:
+  push:
+    tags:
+      - 'sid/*'
+      - 'unstable/*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write # Optional, but good if you use GHCR
+
+jobs:
+  publish:
+    uses: michal-maruska/workflows/.github/workflows/build-and-publish-deb.yml@main
+    secrets: inherit
