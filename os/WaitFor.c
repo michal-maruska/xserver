@@ -121,12 +121,11 @@ first_timer(void)
  * any expired timers
  */
 static int
-check_timers(void)
+check_timers(CARD32 now)
 {
     OsTimerPtr timer;
 
     if ((timer = first_timer()) != NULL) {
-        CARD32 now = GetTimeInMillis();
         int timeout = timer->expires - now;
 
         if (timeout <= 0) {
@@ -170,6 +169,7 @@ WaitForSomething(Bool are_ready)
     int pollerr;
     static Bool were_ready;
     Bool timer_is_running;
+    CARD32 now;
 
     timer_is_running = were_ready;
 
@@ -187,18 +187,20 @@ WaitForSomething(Bool are_ready)
     /* We need a while loop here to handle
        crashed connections and the screen saver timeout */
     while (1) {
+        now = GetTimeInMillis();
         /* deal with any blocked jobs */
         if (workQueue) {
             ProcessWorkQueue();
         }
 
-        timeout = check_timers();
+
+        timeout = check_timers(now);
         are_ready = clients_are_ready();
 
         if (are_ready)
-            timeout = 0;
+            timeout = -1; // fixme: was 0
 
-        BlockHandler(&timeout);
+        BlockHandler(&timeout, now);
         if (NewOutputPending)
             FlushAllOutput();
         /* keep this check close to select() call to minimize race */
@@ -207,7 +209,7 @@ WaitForSomething(Bool are_ready)
         else
             i = ospoll_wait(server_poll, timeout);
         pollerr = GetErrno();
-        WakeupHandler(i);
+        WakeupHandler(i, now);
         if (i <= 0) {           /* An error or timeout occurred */
             if (dispatchException)
                 return FALSE;

@@ -65,6 +65,7 @@
 #include "loaderProcs.h"
 #include "systemd-logind.h"
 
+#include <linux/input.h>
 #include "exevents.h"           /* AddInputDevice */
 #include "exglobals.h"
 #include "eventstr.h"
@@ -1417,6 +1418,12 @@ xf86PostButtonEventM(DeviceIntPtr device,
                        flags, mask);
 }
 
+/* mmc:
+ * xf86PostKeyEvent  ->  VA_ version
+ * xf86PostKeyEventP ->  C array
+ *                       bit Mask ->    xf86PostKeyEventM
+ * xf86PostKeyboardEvent ->  no valuators, pure keyboard.
+ * */
 void
 xf86PostKeyEvent(DeviceIntPtr device, unsigned int key_code, int is_down)
 {
@@ -1431,8 +1438,40 @@ xf86PostKeyEventP(DeviceIntPtr device,
     xf86PostKeyEventM(device, key_code, is_down);
 }
 
+static void
+maybe_special_function(DeviceIntPtr device,unsigned int key_code,
+                       int is_down)
+{
+#define MIN_KEYCODE 8
+    InputInfoPtr pInfo = (InputInfoPtr) device->public.devicePrivate;
+    if (strcmp(pInfo->type_name,XI_KEYBOARD) == 0) {
+        if ((/* is_keyboard */ is_down)
+            /* mmc: fixme: at least check that those keys are on the device. */
+            && key_is_down(device, MIN_KEYCODE + KEY_LEFTCTRL, KEY_POSTED)
+            && key_is_down(device, MIN_KEYCODE + KEY_LEFTALT, KEY_POSTED)
+            ) {
+            if ((key_code <= MIN_KEYCODE + KEY_F10) &&
+                (key_code >= MIN_KEYCODE + KEY_F1))
+            {
+                int vtno = (key_code - (KEY_F1 + MIN_KEYCODE) + 1);
+                xf86ProcessActionEvent(ACTION_SWITCHSCREEN,
+                                       (void*) &vtno);
+            }
+        }
+    }
+}
+
 void
 xf86PostKeyEventM(DeviceIntPtr device, unsigned int key_code, int is_down)
+{
+#if mmc_debug
+    ErrorF("%s: setting the time :)\n", __func__);
+#endif
+    xf86PostKeyEventMTime(device, key_code, is_down, GetTimeInMillis());
+}
+
+void
+xf86PostKeyEventMTime(DeviceIntPtr device, unsigned int key_code, int is_down, Time time)
 {
 #ifdef XFreeXDGA
     DeviceIntPtr pointer;
@@ -1447,8 +1486,9 @@ xf86PostKeyEventM(DeviceIntPtr device, unsigned int key_code, int is_down)
             return;
     }
 #endif
-
-    QueueKeyboardEvents(device, is_down ? KeyPress : KeyRelease, key_code);
+    maybe_special_function(device, key_code, is_down);
+    QueueKeyboardEventsTime(device,
+                            is_down ? KeyPress : KeyRelease, key_code, time);
 }
 
 void
@@ -1459,6 +1499,15 @@ xf86PostKeyboardEvent(DeviceIntPtr device, unsigned int key_code, int is_down)
     valuator_mask_zero(&mask);
     xf86PostKeyEventM(device, key_code, is_down);
 }
+
+/* New entry point for keyboard drivers, which provide the event's timestamp. */
+/* fixme: drop this, useless. */
+void
+xf86PostKeyboardTimeEvent(DeviceIntPtr device, unsigned int key_code, int is_down, Time time)
+{
+    xf86PostKeyEventMTime(device, key_code, is_down, time);
+}
+
 
 InputInfoPtr
 xf86FirstLocalDevice(void)
