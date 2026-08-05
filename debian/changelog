@@ -1,4 +1,4 @@
-xorg-server (2:21.1.24-1) UNRELEASED; urgency=medium
+xorg-server (2:21.1.24-1) unstable; urgency=medium
 
   * Team upload.
   * New upstream release.
@@ -6,7 +6,7 @@ xorg-server (2:21.1.24-1) UNRELEASED; urgency=medium
     -  CVE-2026-56000: GLX contextTags Use-After-Free in CommonMakeCurrent()
     Closes: #1141703.
 
- -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 05 Aug 2026 11:35:50 +0200
+ -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 05 Aug 2026 12:04:38 +0200
 
 xorg-server (2:21.1.23-1) unstable; urgency=medium
 
