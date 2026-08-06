@@ -1,0 +1,143 @@
+
+* focus change
+
+how to keep the events ordered?
+
+xxx yyy XXX YYY
+   ^   ^
+I need to get next(), so scan .... and find it.
+so .....^ next ....^ next
+
+dev1  pos1
+dev2  pos2   when dequeuing ... could I swap?
+dev3  pos3
+
+xxx yyy ->   xy.... ?
+
+
+How to keep N queues?   n events
+|----|  | ....| |....|
+get next linear in N
+
+
+
+
+DDX ->
+
+* converts into a series of events.
+dix/inpututils.c
+dix/getevents.c
+
+queueEventList -> mieqEnqueue
+
+* -> mi ?
+mieqEnqueue(DeviceIntPtr pDev, InternalEvent *e)
+called from ...
+
+
+
+
+
+
+* mi uses InitEventList
+new_events = calloc(new_nevents, sizeof(EventRec));
+eventQueue->events = new_events;
+
+eventQueue in mi.c
+
+QueueKeyboardEvents (getevents) -> queueEventList -> mieqEnqueue
+
+* but InputEventList is the storage for DIX
+
+mmc: so InputEventList is a "buffer" which is used to expand
+EACH input event SEPARATELY; then this buffer is copied over to the
+eventQueue. This buffer is 100 max. the eq is dynamically resized?
+
+union _InternalEvent  -> _DeviceEvent
+   that has already XKB values !!!!
+
+
+
+*** processing
+
+WakeupHandler(i, (void *) &LastSelectMask, now); ->
+
+DDX -> mi ->
+* mieqProcessInputEventsTime
+
+
+** hw/xfree86/common/xf86Events.c
+xf86Wakeup->....
+
+this is not used, is it?
+ProcessInputEvents(void)
+
+...->
+void ProcessInputEventsPush (Time now)
+->      mieqProcessInputEventsTime(now);
+
+But here I lose it!!! fixme!
+mieqProcessInputEvents();
+
+
+
+* Time:
+so  CurrentTime is updated from getTimeInMilis
+..... in various points, while invoking processing events.
+
+
+But events themselves also push the currentTime ...
+* So, where is CurrentTime used?
+
+CoreEnterLeaveEvent .... what time?
+that time should not be used by client?
+I keep keyboard back -- grabbed-
+time on mouse flows.   so this would be time of mouse?
+
+this time must: go forward, and any event after should use a non-less time.
+"Monotonocity" condition. although not much point.
+
+so I can grab focus in the past... assuming some device is being kept grabbed,
+and its events WILL be affected!
+
+
+
+
+* Compilation:
+libtool: compile:  gcc -std=gnu99 -DHAVE_CONFIG_H -I. -I../../xkb -I../include -I../../hw/xfree86 -I../../hw/xfree86/include -I../../hw/xfree86/common -I../../hw/xfree86/os-support -I../../hw/xfree86/os-support/bus -I../../os -D_FORTIFY_SOURCE=2 -DPRE_RELEASE=0 -DHAVE_DIX_CONFIG_H -Wall -Wpointer-arith -Wmissing-declarations -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs -Wbad-function-cast -Wold-style-definition -Wdeclaration-after-statement -Wunused -Wuninitialized -Wshadow -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wlogical-op -Werror=implicit -Werror=nonnull -Werror=init-self -Werror=main -Werror=missing-braces -Werror=sequence-point -Werror=return-type -Werror=trigraphs -Werror=array-bounds -Werror=write-strings -Werror=address -Werror=int-to-pointer-cast -Werror=pointer-to-int-cast -fno-strict-aliasing -fno-strict-aliasing -D_DEFAULT_SOURCE -D_BSD_SOURCE -DHAS_FCHOWN -DHAS_STICKY_DIR_BIT -I/usr/include/pixman-1 -I/usr/include/freetype2 -I../../include -I../include -I../../Xext -I../../damageext -I../../xfixes -I../../Xi -I../../mi -I../../miext/sync -I../../miext/shadow -I../../miext/damage -I../../render -I../../randr -I../../fb -I../../dbe -I../../present -fvisibility=hidden -DDEFAULT_MODULE_PATH=\"/usr/lib/xorg/modules\" -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -MT freeze-queue.lo -MD -MP -MF .deps/freeze-queue.Tpo -c ../../xkb/freeze-queue.c  -fPIC -DPIC -o .libs/freeze-queue.o
+../../xkb/freeze-queue.c: In function 'queue_thaw':
+../../xkb/freeze-queue.c:125:41: warning: passing argument 2 of 'next->pclass->ProcessEvent' from incompatible pointer type
+                                         event,
+                                         ^
+../../xkb/freeze-queue.c:125:41: note: expected 'union InternalEvent *' but argument is of type 'QdEventPtr'
+../../xkb/freeze-queue.c: At top level:
+../../xkb/freeze-queue.c:40:1: warning: 'queue_count_events' defined but not used [-Wunused-function]
+ queue_count_events(queue_data* event_list)
+ ^
+mv -f .deps/freeze-queue.Tpo .deps/freeze-queue.Plo
+
+
+
+
+* so after pushing the time, the pipes deliver some events.
+Before running them through DIX, I should sort them again!
+
+so xxx  yyy
+now the following event is guaranteed to come AFTER all those xxx yyy.
+So I can freely proceed to deliver them!
+
+mi foreach device
+   push-time
+--D1		xxx
+--D2		yyy
+...
+--Dn		zz
+
+So, question is: why not do this sorting only before DIX?
+
+* why is AR not receiving time, and not GENERATING the events? i.e. delivering to DIX?
+
+
+slave -> master ?
+
+deliver the TIME to virtual master !!!!!
