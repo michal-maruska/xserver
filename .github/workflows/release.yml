@@ -1,4 +1,5 @@
 name: Publish Debian Package
+run-name: "Publish Debian Package — ${{ github.ref_name }}"
 
 on:
   push:
