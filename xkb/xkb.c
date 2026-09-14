@@ -2867,6 +2867,7 @@ ProcXkbSetMap(ClientPtr client)
             }
         }
     } else {
+#if 0
         DeviceIntPtr other;
 
         for (other = inputInfo.devices; other; other = other->next) {
@@ -2876,6 +2877,7 @@ ProcXkbSetMap(ClientPtr client)
 
             _XkbSetMap(client, other, stuff, tmp); //ignore rc
         }
+#endif
     }
 
     return Success;
