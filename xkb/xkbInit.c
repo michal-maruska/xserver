@@ -501,7 +501,9 @@ XkbInitControls(DeviceIntPtr pXDev, XkbSrvInfoPtr xkbi)
         XkbMouseKeysAccelMask | XkbAudibleBellMask | XkbIgnoreGroupLockMask;
     if (XkbWantAccessX)
         ctrls->enabled_ctrls |= XkbAccessXKeysMask;
+#if !MMC_PIPELINE
     AccessXInit(pXDev);
+#endif
     return Success;
 }
 
@@ -512,6 +514,12 @@ XkbInitOverlayState(XkbSrvInfoPtr xkbi)
     return Success;
 }
 
+/* In this file I see 2 entry points.
+ *
+ * InitKeyboardDeviceStruct is called from the low-level driver as this is a
+ * wrapper for dix's InitKeyboardDeviceStruct.  But Before calling this the driver
+ * should setup the XKB config!  That is done through: names XkbInitDevice is the
+ * return from DIX in here.*/
 static Bool
 InitKeyboardDeviceStructInternal(DeviceIntPtr dev, XkbRMLVOSet * rmlvo,
                                  const char *keymap, int keymap_length,
@@ -648,6 +656,13 @@ InitKeyboardDeviceStructInternal(DeviceIntPtr dev, XkbRMLVOSet * rmlvo,
     }
     XkbFreeRMLVOSet(&rmlvo_dflts, FALSE);
 
+#if MMC_PIPELINE
+    if
+      // (strcmp(dev->name, "evdev keyboard") == 0)
+      (strcmp(dev->name, "Virtual core keyboard") == 0)
+      xkb_init_pipeline(dev);
+#endif  /* MMC_PIPELINE */
+
     return TRUE;
 
  unwind_desc:
@@ -734,10 +749,13 @@ XkbFreeInfo(XkbSrvInfoPtr xkbi)
 extern int XkbDfltRepeatDelay;
 extern int XkbDfltRepeatInterval;
 
+/* mmc: This is broken: I should #if !  all parts mentioning these vars! todo! */
+#if !MMC_PIPELINE || 1
 extern unsigned short XkbDfltAccessXTimeout;
 extern unsigned int XkbDfltAccessXTimeoutMask;
 extern unsigned int XkbDfltAccessXFeedback;
 extern unsigned short XkbDfltAccessXOptions;
+#endif
 
 int
 XkbProcessArguments(int argc, char *argv[], int i)

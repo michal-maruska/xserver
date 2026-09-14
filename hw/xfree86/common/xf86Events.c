@@ -129,6 +129,27 @@ SetTimeSinceLastInputEvent(void)
     xf86Info.lastEventTime = GetTimeInMillis();
 }
 
+
+/*
+ * ProcessInputEventsPush --
+ *      After the last event read, or possibly "no event" available from the Select()
+ *      call, time @now can push us further in the input processing-interpreting.
+ */
+void
+ProcessInputEventsPush(Time now)
+{
+    int x, y;
+
+    if (now)
+        mieqProcessInputEventsTime(now);
+    else
+        mieqProcessInputEvents();
+
+    /* FIXME: This is a problem if we have multiple pointers */
+    miPointerGetPosition(inputInfo.pointer, &x, &y);
+    xf86SetViewport(xf86Info.currentScreen, x, y);
+}
+
 /*
  * ProcessInputEvents --
  *      Retrieve all waiting input events and pass them to DIX in their
@@ -138,15 +159,12 @@ SetTimeSinceLastInputEvent(void)
 void
 ProcessInputEvents(void)
 {
-    int x, y;
-
-    mieqProcessInputEvents();
-
-    /* FIXME: This is a problem if we have multiple pointers */
-    miPointerGetPosition(inputInfo.pointer, &x, &y);
-
-    xf86SetViewport(xf86Info.currentScreen, x, y);
+/* note: GetTimeInMillis(); would be incorrect.
+   * So we use the conservative (nothing saying) 0.
+   * Hopefully more calls of this get replaced with ProcessInputEventsPush. */
+  ProcessInputEventsPush(0);
 }
+
 
 /*
  * Handle keyboard events that cause some kind of "action"
@@ -217,10 +235,11 @@ xf86ProcessActionEvent(ActionEvent action, void *arg)
 
 /* ARGSUSED */
 void
-xf86Wakeup(void *blockData, int err)
+xf86Wakeup(void *blockData, int err, Time now)
 {
     if (xf86VTSwitchPending())
         xf86VTSwitch();
+    ProcessInputEventsPush(now);
 }
 
 /*
