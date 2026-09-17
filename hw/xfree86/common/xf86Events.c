@@ -155,6 +155,8 @@ ProcessInputEventsPush(Time now)
  *      Retrieve all waiting input events and pass them to DIX in their
  *      correct chronological order. Only reads from the system pointer
  *      and keyboard.
+ *      mmc: why is this in race with mieqEnqueue ../mi/mieq.c:
+ *           > mieqEnqueue must be reentrant with ProcessInputEvents
  */
 void
 ProcessInputEvents(void)
