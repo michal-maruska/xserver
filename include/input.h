@@ -481,9 +481,21 @@ extern _X_EXPORT int GetKeyboardEvents(InternalEvent *events,
                                        int type,
                                        int key_code);
 
+extern _X_EXPORT int GetKeyboardEventsTime(InternalEvent *events,
+                                       DeviceIntPtr pDev,
+                                       int type,
+                                       int key_code,
+                                       Time time);
+
+
 extern _X_EXPORT void QueueKeyboardEvents(DeviceIntPtr pDev,
                                           int type,
                                           int key_code);
+
+extern _X_EXPORT void QueueKeyboardEventsTime(DeviceIntPtr pDev,
+                                          int type,
+                                          int key_code,
+                                          Time time);
 
 extern int GetTouchEvents(InternalEvent *events,
                           DeviceIntPtr pDev,
