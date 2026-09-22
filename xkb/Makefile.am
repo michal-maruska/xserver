@@ -9,7 +9,7 @@ DDX_SRCS = \
         ddxLoad.c
 
 if MMC_PIPELINE
-PIPELINE_SRCS = freeze-queue.c pipeline-proc.c plugin-AR.c core-plugin.c
+PIPELINE_SRCS = freeze-queue.c pipeline.c pipeline-proc.c plugin-AR.c core-plugin.c
 else
 PIPELINE_SRCS =
 endif
