@@ -14,6 +14,7 @@ xorg-server (2:21.1.25-1) UNRELEASED; urgency=medium
     - CVE-2026-93523: XInput2 PassiveUngrabDevice Modifier Out-of-Bounds Write
     - CVE-2026-93524: XKB SetMap Key Width/Action Count Desync Out-Of-Bounds Read
     - CVE-2026-93536: GestureBuildSprite Use-After-Free
+  * control, rules: Clean up remnants of kfreebsd.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 07 Oct 2026 12:20:27 +0300
 

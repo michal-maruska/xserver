@@ -119,10 +119,6 @@ endif
 confflags += --disable-config-hal
 ifeq ($(DEB_HOST_ARCH_OS), linux)
 	confflags += --enable-config-udev
-else ifeq ($(DEB_HOST_ARCH_OS), kfreebsd)
-	confflags += --disable-config-udev --enable-config-devd
-	libs = $(shell pkg-config --libs libbsd-overlay)
-	cppflags = $(shell pkg-config --cflags libbsd-overlay)
 else # hurd
 	confflags += --disable-config-udev
 endif
@@ -137,14 +133,10 @@ confflags_udeb += --disable-libunwind
 
 # linux: libdrm needed for kms (hw/xfree86/os-support/linux/lnx_platform.c)
 #        even in udeb
-# kfreebsd: libdrm for dri in main build
 # hurd: no libdrm
 ifeq ($(DEB_HOST_ARCH_OS), linux)
 	confflags_main += --enable-libdrm
 	confflags_udeb += --enable-libdrm
-else ifeq ($(DEB_HOST_ARCH_OS), kfreebsd)
-	confflags_main += --enable-libdrm
-	confflags_udeb += --disable-libdrm
 else # hurd
 	confflags_main += --disable-libdrm
 	confflags_udeb += --disable-libdrm
