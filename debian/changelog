@@ -1,4 +1,4 @@
-xorg-server (2:21.1.25-1) UNRELEASED; urgency=medium
+xorg-server (2:21.1.25-1) unstable; urgency=medium
 
   * Team upload.
   * New upstream release.
@@ -17,7 +17,7 @@ xorg-server (2:21.1.25-1) UNRELEASED; urgency=medium
   * control, rules: Clean up remnants of kfreebsd.
   * control, rules: Clean up remnants of powerpcspe.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Wed, 07 Oct 2026 12:20:27 +0300
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 07 Oct 2026 12:37:53 +0300
 
 xorg-server (2:21.1.24-1) unstable; urgency=medium
 
