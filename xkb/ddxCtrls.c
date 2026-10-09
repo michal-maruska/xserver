@@ -71,7 +71,7 @@ XkbDDXChangeControls(DeviceIntPtr dev, XkbControlsPtr old, XkbControlsPtr new)
          i = 0; i < XkbPerKeyBitArraySize; i++) {
         if (rep_old[i] != rep_new[i]) {
             rep_fb[i] = rep_new[i];
-            changed &= XkbPerKeyRepeatMask;
+            changed |= XkbPerKeyRepeatMask;
         }
     }
 

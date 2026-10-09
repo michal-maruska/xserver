@@ -61,6 +61,7 @@ confflags_main = \
 	--enable-xephyr \
 	--with-sha1=libnettle \
 	--enable-xcsecurity \
+	--enable-pipeline \
 	$(void)
 
 confflags_udeb = \
@@ -90,6 +91,7 @@ confflags_udeb = \
 	--disable-kdrive \
 	--disable-xephyr \
 	--with-sha1=nettlestatic \
+	--enable-pipeline \
 	$(void)
 
 ifeq ($(DEB_HOST_ARCH_OS), linux)

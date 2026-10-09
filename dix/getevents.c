@@ -151,6 +151,8 @@ key_is_down(DeviceIntPtr pDev, int key_code, int type)
     return ret;
 }
 
+/* mmc: I see 2 states! POSTED & PROCESSED */
+
 static Bool
 key_autorepeats(DeviceIntPtr pDev, int key_code)
 {
@@ -169,7 +171,7 @@ init_touch_ownership(DeviceIntPtr dev, TouchOwnershipEvent *event, Time ms)
     event->deviceid = dev->id;
 }
 
-static void
+void
 init_raw(DeviceIntPtr dev, RawDeviceEvent *event, Time ms, int type, int detail)
 {
     memset(event, 0, sizeof(RawDeviceEvent));
@@ -1013,6 +1015,7 @@ updateHistory(DeviceIntPtr dev, ValuatorMask *mask, CARD32 ms)
     }
 }
 
+/* mmc: still via `mi' */
 static void
 queueEventList(DeviceIntPtr device, InternalEvent *events, int nevents)
 {
@@ -1052,6 +1055,17 @@ QueueKeyboardEvents(DeviceIntPtr device, int type,
     queueEventList(device, InputEventList, nevents);
 }
 
+void
+QueueKeyboardEventsTime(DeviceIntPtr device, int type,
+                        int keycode, Time time)
+{
+    int nevents;
+
+    nevents = GetKeyboardEventsTime(InputEventList, device, type, keycode, time);
+    queueEventList(device, InputEventList, nevents);
+}
+
+
 /**
  * Returns a set of InternalEvents for KeyPress/KeyRelease, optionally
  * also with valuator events.
@@ -1065,8 +1079,16 @@ int
 GetKeyboardEvents(InternalEvent *events, DeviceIntPtr pDev, int type,
                   int key_code)
 {
+    return GetKeyboardEventsTime(events, pDev, type, key_code,
+                                 GetTimeInMillis());
+}
+
+int
+GetKeyboardEventsTime(InternalEvent *events, DeviceIntPtr pDev, int type,
+                  int key_code, Time time)
+{
     int num_events = 0;
-    CARD32 ms = 0;
+    CARD32 ms = time;
     DeviceEvent *event;
     RawDeviceEvent *raw;
     enum DeviceEventSource source_type = EVENT_SOURCE_NORMAL;
@@ -1102,6 +1124,10 @@ GetKeyboardEvents(InternalEvent *events, DeviceIntPtr pDev, int type,
 
     /* Handle core repeating, via press/release/press/release. */
     if (type == KeyPress && key_is_down(pDev, key_code, KEY_POSTED)) {
+#if MMC_PIPELINE
+	/* mmc: in fact disabling hw key-repeat */
+	return 0;
+#endif
         /* If autorepeating is disabled either globally or just for that key,
          * or we have a modifier, don't generate a repeat event. */
         if (!pDev->kbdfeed->ctrl.autoRepeat ||
@@ -1109,8 +1135,6 @@ GetKeyboardEvents(InternalEvent *events, DeviceIntPtr pDev, int type,
             pDev->key->xkbInfo->desc->map->modmap[key_code])
             return 0;
     }
-
-    ms = GetTimeInMillis();
 
     if (source_type == EVENT_SOURCE_NORMAL) {
         raw = &events->raw_event;

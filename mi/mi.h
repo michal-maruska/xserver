@@ -183,6 +183,9 @@ extern _X_EXPORT void miStepDash(int /*dist */ ,
 typedef struct _DeviceRec *DevicePtr;
 #endif
 
+extern _X_EXPORT Bool mieq_init_device_queue(DeviceIntPtr);
+extern _X_EXPORT void mieq_close_device_queue (DeviceIntPtr dev);
+
 extern _X_EXPORT Bool mieqInit(void
     );
 
@@ -203,6 +206,9 @@ extern _X_EXPORT void mieqProcessDeviceEvent(DeviceIntPtr /* dev */ ,
     );
 
 extern _X_EXPORT void mieqProcessInputEvents(void
+    );
+
+extern _X_EXPORT void mieqProcessInputEventsTime(Time
     );
 
 extern _X_EXPORT void mieqAddCallbackOnDrained(CallbackProcPtr callback,
