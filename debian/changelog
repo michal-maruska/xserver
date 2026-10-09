@@ -1,3 +1,104 @@
+xorg-server (2:21.1.25-1-maruska) unstable; urgency=medium
+
+  * logging macros in dix/events
+  * colorful tracing/debugging
+  * introduce Loader class, ABI version for pipeline plugins
+  * turn off tracing grab/allow.
+  * During ungrab/allow and re-grabbing, use the Event time faithfully.
+  * Verbosity on Grabs and AllowSome. Time printing for ProcGrabPointer is broken.
+  * MonthChangedOrBadTime ... verbose & disabled
+  * comments & unused code
+  * Slave (hw) key events should not touch the GLOBAL TIME
+  * verbosity on deactivating grab (allow-event replay is culprit)
+  * Don't update the time just b/c it's noticed!
+  * selection.h needed in dix/windows.c ... suggestion from Debian patch (why not applied)??
+  * verbosity on why ungrab fails
+  * Don't push event time ahead. Yet, push currentTime even in Sync play.
+  * struct _XF86OptionRec not used!
+  * trace conditionally ungrab & allowSome
+  * Do update the non-event current time.
+  * c99
+  * tabs
+  * gitignore: debian tmp files
+  * quilt: disable part of the series (not full now?)
+  * build with "pipeline" enabled
+  * build with "pipeline" enabled -- udeb
+  * debian: clean -- don't remove the full build directories
+  * drop the source-install
+  * debian: add build dependency on libx11-xcb-dev
+  * depend on the extended xkb protocol
+  * my old docs
+  * HACK: disable overwriting keymap on Device change
+  * verbosity in XI: ProcessDeviceEvent(), but disabled
+  * fix in xkb.c: bug with requests to update with different types
+  * Shrink the table (Actions, Symbols); fix off-by-one mistakes
+  * fix: per key repeat
+  * my comments on xkb.c
+  * info on possible bug with key repeat --- no fix
+  * verbosity in xkb.c: autorepeat
+  * So now this is solved .... just some comments here
+  * DISABLED: extend loader to check ABI of input modules
+  * Add (Un)LoadModule to non-xfree86 servers: kdrive, xnest, vfb
+  * Define plugin, extend C struct DeviceIntRec to point at pipeline
+  * The pipeline infrastructure --- connection, registration of plugins.
+  * re-enable UnloadModule where it can be done!
+  * zero the plugin after unload
+  * Implement api from XKB in xorgproto: dispatch to pipeline
+  * Expose basic pipeline api in server headers, to register plugin
+  * Pipeline takes over the event processing
+  * Fix set_timeout:
+  * overwrite also 0 & -1 timeout.
+  * MMC_PIPELINE: use DeviceRec.thawProc before PlayReleasedEvents()
+  * C++ friendliness: so that the plugin can be copiled as C++ code.
+  * C++ friendliness -- tell g++ include is C (math.h)
+  * Make eventstr.h part of the SDK: for the plugin code: InternalEvent
+  * obsolete strange comments
+  * disable setting map when not XkbUseCoreKbd
+  * activate the fork plugin, if the module was loaded (due to xorg.conf)
+  * Use off_devices list when devices is NULL.
+  * comments on sync replaying
+  * trace ComputeFreezes conditionally.
+  * trailing
+  * Comments on the flip-switch to avoid recursion in replaying frozen events.
+  * Auto-repeat plugin
+  * remove XKB autorepeat when pipeline used
+  * ci: build on Github
+  * fakeroot necessary. Why?
+  * dix: ignore repeated keypress even from different device
+  * fix: which header file to define 'pointer'?
+  * ar_thaw: do not ar_push_events if next is frozen!
+  * xfree86: restore Special actions to hardcoded keys: SWITCH-vt action
+  * Extend the DIX api, to accept keyboard events with timestamp.
+  * new Xfree86 DDX api for timestamped keyevents
+  * dix api to register Block- and Wake-handlers using "current" time.
+  * dix: fix upstream comment: no more pReadMask for BlockHandler
+  * Extend MIeq api for DDX event processing to provide current time.
+  * DDX: extend and register xf86Wakeup, push Time to MIeq
+  * dix: new methods of the DeviceRec: New ABI version. (debian also)
+  * comments
+  * verbosity
+  * Configure.ac: Enable use the pipeline optionally -- MMC_PIPELINE
+  * don't correct event timestamps in MI - pipeline needs precision TODO
+  * WARN: mieqEnqueue must be reentrant with ProcessInputEvents
+  * use pushTimeProc after processing events (in MI) -- depends on MMC_PIPELINE?
+  * Change the slot name to single event, not plural events.
+  * Manage the device-specific queues.
+  * Lock when adding & removing the queues!
+  * Enqueue events into device-specific queue.  Use find_queue()
+  * mi: For MMC_PIPELINE don't force increasing event time.
+  * [half conditional] When processing mi events, do push_time_to_devices() to related _master_ device.
+  * split push_event_to_device() out of mieqProcessInputEvents()
+  * comment
+  * Process the events in correct order: find_first_non_empty().
+  * Split the initial part of mieqProcessInputEvents() into miManageQueue().
+  * [bad half!] mieqProcessInputEventsTime: push only up to the max time.
+  * enable USE_SEPARATE_QUEUES
+  * Revert "fakeroot necessary. Why?"
+  * Revert "activate the fork plugin, if the module was loaded (due to xorg.conf)"
+  * SQ: timeout -1 not 0
+
+ -- Michal Maruska <mmaruska@gmail.com>  Fri, 09 Oct 2026 09:44:15 +0200
+
 xorg-server (2:21.1.25-1) unstable; urgency=medium
 
   * Team upload.
